@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>نظام إدارة المهام v2 — شبكات الفايبر</title>
+<title>نظام إدارة المهام v2 — المكتب الفني</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
@@ -183,7 +183,7 @@ header{background:rgba(13,22,38,.95);border-bottom:1px solid var(--border);paddi
   <div class="login-box">
     <div class="login-logo">🔗</div>
     <h2>نظام إدارة المهام</h2>
-    <p>شبكات الفايبر — المكتب الفني</p>
+    <p>المكتب الفني</p>
     <div class="login-tabs">
       <button class="login-tab active" onclick="setRole('admin',this)">👑 Admin</button>
       <button class="login-tab" onclick="setRole('viewer',this)">👁 Viewer</button>
@@ -192,9 +192,7 @@ header{background:rgba(13,22,38,.95);border-bottom:1px solid var(--border);paddi
       <label>كلمة المرور</label>
       <input type="password" id="loginPass" placeholder="أدخل كلمة المرور" onkeydown="if(e&&e.key==='Enter')doLogin()">
     </div>
-    <div class="login-hint">
-      🔑 Admin: <b>admin123</b>&nbsp;&nbsp;|&nbsp;&nbsp;👁 Viewer: <b>view123</b>
-    </div>
+    
     <button class="btn-login" onclick="doLogin()">دخول</button>
     <div class="login-error" id="loginErr">❌ كلمة المرور غير صحيحة</div>
   </div>
@@ -206,7 +204,7 @@ header{background:rgba(13,22,38,.95);border-bottom:1px solid var(--border);paddi
   <div class="header-inner">
     <div class="logo">
       <div class="logo-icon">🔗</div>
-      <div><h1>إدارة المهام</h1><span>شبكات الفايبر</span></div>
+      <div><h1>إدارة المهام</h1><span>المكتب الفني</span></div>
     </div>
     <span class="role-badge" id="roleBadge"></span>
     <div class="ml-auto" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -280,7 +278,7 @@ header{background:rgba(13,22,38,.95);border-bottom:1px solid var(--border);paddi
 
 <script>
 // ====== AUTH ======
-const ROLES = { admin: 'admin123', viewer: 'view123' };
+const ROLES = { admin: "admin100100", viewer: "user123" };
 let currentRole = 'viewer';
 let loginTarget = 'admin';
 function setRole(r, btn) {
@@ -556,7 +554,7 @@ function exportPrint() {
     @media print{button{display:none}}
   </style></head><body>
   <button onclick="window.print()" style="margin-bottom:16px;padding:8px 20px;background:#0057e7;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">🖨 طباعة</button>
-  <h1>📋 تقرير المهام — شبكات الفايبر</h1>
+  <h1>📋 تقرير المهام — المكتب الفني</h1>
   <div class="sub">تاريخ التقرير: ${now} | إجمالي المهام: ${tasks.length}</div>
   <div class="stats">
     <div class="st"><b>${tasks.length}</b><span>الكل</span></div>
