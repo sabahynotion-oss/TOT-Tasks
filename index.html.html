@@ -292,6 +292,7 @@ function doLogin() {
     currentRole = loginTarget;
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
+    sessionStorage.setItem('fiberRole', currentRole);
     const badge = document.getElementById('roleBadge');
     badge.textContent = currentRole === 'admin' ? '👑 Admin' : '👁 Viewer';
     badge.className = 'role-badge ' + (currentRole === 'admin' ? 'role-admin' : 'role-viewer');
@@ -303,6 +304,7 @@ function doLogin() {
   }
 }
 function logout() {
+  sessionStorage.removeItem('fiberRole');
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
   document.getElementById('loginPass').value = '';
@@ -624,6 +626,21 @@ function getDemoData() {
     ]}
   ];
 }
+
+// Auto-login if session exists
+(function() {
+  const saved = sessionStorage.getItem('fiberRole');
+  if (saved) {
+    currentRole = saved;
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    const badge = document.getElementById('roleBadge');
+    badge.textContent = currentRole === 'admin' ? '👑 Admin' : '👁 Viewer';
+    badge.className = 'role-badge ' + (currentRole === 'admin' ? 'role-admin' : 'role-viewer');
+    document.getElementById('addTaskBtn').style.display = currentRole === 'admin' ? '' : 'none';
+    renderAll();
+  }
+})();
 </script>
 </body>
 </html>
