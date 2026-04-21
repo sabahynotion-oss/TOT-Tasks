@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نظام إدارة المهام v2 — شبكات الفايبر</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+:root {
+  --bg:#060d18; --s1:#0d1626; --s2:#111e30; --s3:#172340;
+  --border:#1c2e47; --border2:#243852;
+  --accent:#00c6ff; --accent2:#0057e7; --accent3:#003ba3;
+  --green:#00e676; --orange:#ffab00; --red:#ff4d4d; --purple:#a78bfa;
+  --yellow:#ffd600;
+  --text:#dde8f5; --text2:#7a94b4; --text3:#3a5070;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(0,86,231,0.08),transparent);pointer-events:none;z-index:0}
+
+/* ===== LOGIN ===== */
+#loginScreen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center}
+.login-box{background:var(--s1);border:1px solid var(--border2);border-radius:20px;padding:40px;width:360px;text-align:center;animation:fadeIn .4s ease}
+.login-logo{font-size:48px;margin-bottom:16px}
+.login-box h2{font-size:20px;font-weight:800;margin-bottom:4px}
+.login-box p{font-size:12px;color:var(--text2);margin-bottom:28px}
+.login-tabs{display:flex;gap:8px;margin-bottom:24px;background:var(--s2);border-radius:10px;padding:4px}
+.login-tab{flex:1;padding:8px;border:none;background:transparent;color:var(--text2);font-family:'Cairo',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border-radius:8px;transition:all .2s}
+.login-tab.active{background:var(--accent2);color:#fff}
+.login-field{margin-bottom:14px;text-align:right}
+.login-field label{font-size:11px;color:var(--text2);display:block;margin-bottom:5px}
+.login-field input{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'Cairo',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
+.login-field input:focus{border-color:var(--accent2)}
+.login-hint{font-size:11px;color:var(--text3);margin-bottom:16px;background:var(--s2);border-radius:8px;padding:10px;text-align:right;line-height:1.8}
+.btn-login{width:100%;padding:12px;background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;border-radius:10px;color:#fff;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-login:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(0,87,231,.4)}
+.login-error{color:var(--red);font-size:12px;margin-top:10px;display:none}
+
+/* ===== LAYOUT ===== */
+#app{display:none;position:relative;z-index:1}
+header{background:rgba(13,22,38,.95);border-bottom:1px solid var(--border);padding:14px 0;position:sticky;top:0;z-index:100;backdrop-filter:blur(20px)}
+.header-inner{max-width:1400px;margin:0 auto;padding:0 20px;display:flex;align-items:center;gap:16px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--accent2),var(--accent));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo h1{font-size:16px;font-weight:800}
+.logo span{font-size:10px;color:var(--text2);display:block}
+.role-badge{padding:3px 12px;border-radius:12px;font-size:11px;font-weight:700;margin-right:4px}
+.role-admin{background:rgba(255,171,0,.12);color:var(--orange);border:1px solid rgba(255,171,0,.25)}
+.role-viewer{background:rgba(167,139,250,.12);color:var(--purple);border:1px solid rgba(167,139,250,.25)}
+.ml-auto{margin-right:auto}
+.btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;transition:all .2s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-primary{background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,87,231,.4)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-green{background:rgba(0,230,118,.12);color:var(--green);border:1px solid rgba(0,230,118,.2)}
+.btn-green:hover{background:rgba(0,230,118,.2)}
+.btn-orange{background:rgba(255,171,0,.12);color:var(--orange);border:1px solid rgba(255,171,0,.2)}
+.btn-orange:hover{background:rgba(255,171,0,.2)}
+.btn-red{background:rgba(255,77,77,.1);color:var(--red);border:1px solid rgba(255,77,77,.2)}
+.btn-red:hover{background:rgba(255,77,77,.2)}
+.btn-sm{padding:5px 10px;font-size:11px}
+
+.container{max-width:1400px;margin:0 auto;padding:24px 20px 50px}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:22px}
+.sc{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px 18px;position:relative;overflow:hidden;transition:border-color .2s}
+.sc::after{content:'';position:absolute;top:0;right:0;width:3px;height:100%;background:var(--c)}
+.sc:hover{border-color:var(--c)}
+.sc-label{font-size:10px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.sc-val{font-size:26px;font-weight:900;color:var(--c);line-height:1}
+.sc-sub{font-size:10px;color:var(--text3);margin-top:3px}
+
+/* TOOLBAR */
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+.filter-btn{padding:6px 14px;border-radius:16px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-family:'Cairo',sans-serif;font-size:12px;font-weight:600;transition:all .2s}
+.filter-btn.active,.filter-btn:hover{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+.search{display:flex;align-items:center;gap:8px;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:7px 12px;margin-right:auto}
+.search input{background:transparent;border:none;outline:none;color:var(--text);font-family:'Cairo',sans-serif;font-size:12px;width:180px}
+.search input::placeholder{color:var(--text3)}
+
+/* BOARD */
+.board{display:flex;flex-direction:column;gap:12px}
+.task-card{background:var(--s1);border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:all .25s}
+.task-card:hover{border-color:rgba(0,198,255,.2);box-shadow:0 4px 20px rgba(0,0,0,.3)}
+
+.task-head{padding:14px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none}
+.task-head:hover{background:rgba(255,255,255,.015)}
+.prio-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;box-shadow:0 0 6px currentColor}
+.prio-high{color:var(--red)} .prio-medium{color:var(--orange)} .prio-low{color:var(--green)}
+.task-info{flex:1;min-width:0}
+.task-name{font-size:14px;font-weight:700;margin-bottom:3px}
+.task-sub{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.badge{padding:2px 9px;border-radius:8px;font-size:10px;font-weight:700;border:1px solid transparent}
+.s-done{background:rgba(0,230,118,.1);color:var(--green);border-color:rgba(0,230,118,.2)}
+.s-active{background:rgba(0,198,255,.1);color:var(--accent);border-color:rgba(0,198,255,.2)}
+.s-pending{background:rgba(255,171,0,.1);color:var(--orange);border-color:rgba(255,171,0,.2)}
+.s-blocked{background:rgba(255,77,77,.1);color:var(--red);border-color:rgba(255,77,77,.2)}
+.s-planned{background:rgba(167,139,250,.1);color:var(--purple);border-color:rgba(167,139,250,.2)}
+.p-wrap{display:flex;align-items:center;gap:8px;min-width:140px}
+.pbar{flex:1;height:5px;background:var(--s3);border-radius:3px;overflow:hidden}
+.pfill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .4s}
+.ppct{font-size:11px;font-weight:800;color:var(--accent);min-width:32px}
+.owner-chip{display:flex;align-items:center;gap:6px}
+.av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;border:2px solid var(--bg);flex-shrink:0}
+.task-actions{display:flex;gap:6px;align-items:center}
+.icon-btn{background:transparent;border:none;cursor:pointer;padding:5px 7px;border-radius:6px;font-size:14px;transition:all .2s;color:var(--text2)}
+.icon-btn:hover{background:var(--s2);color:var(--text)}
+.chevron{color:var(--text3);font-size:12px;transition:transform .3s}
+.task-card.expanded .chevron{transform:rotate(180deg)}
+
+/* PHASES */
+.phases-wrap{display:none;padding:0 18px 18px;border-top:1px solid var(--border)}
+.task-card.expanded .phases-wrap{display:block}
+.ph-title{font-size:10px;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin:14px 0 10px}
+.ph-timeline{position:relative}
+.ph-timeline::before{content:'';position:absolute;right:12px;top:14px;bottom:14px;width:2px;background:var(--border);z-index:0}
+.ph-row{display:flex;align-items:flex-start;gap:14px;padding:8px 0}
+.ph-dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;position:relative;z-index:1;border:2px solid}
+.pd-done{background:rgba(0,230,118,.1);border-color:var(--green);color:var(--green)}
+.pd-active{background:rgba(0,198,255,.1);border-color:var(--accent);color:var(--accent)}
+.pd-pending{background:rgba(255,171,0,.1);border-color:var(--orange);color:var(--orange)}
+.pd-blocked{background:rgba(255,77,77,.1);border-color:var(--red);color:var(--red)}
+.pd-planned{background:rgba(167,139,250,.1);border-color:var(--purple);color:var(--purple)}
+.ph-content{flex:1;min-width:0}
+.ph-hd{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.ph-name{font-size:13px;font-weight:700}
+.ph-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;background:var(--s2);border-radius:8px;padding:10px}
+.ph-item label{font-size:9px;color:var(--text3);display:block;margin-bottom:2px}
+.ph-item span{font-size:11px;color:var(--text);font-weight:600}
+.ph-status-sel{background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:3px 8px;color:var(--text);font-family:'Cairo',sans-serif;font-size:11px;outline:none;cursor:pointer}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+.overlay.open{display:flex}
+.modal{background:var(--s1);border:1px solid var(--border2);border-radius:18px;width:92%;max-width:700px;max-height:92vh;overflow-y:auto;padding:28px;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-title{font-size:17px;font-weight:800;margin-bottom:22px;color:var(--accent);display:flex;align-items:center;gap:8px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg label{font-size:11px;color:var(--text2);font-weight:700}
+.fg input,.fg select,.fg textarea{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 13px;color:var(--text);font-family:'Cairo',sans-serif;font-size:12px;outline:none;transition:border-color .2s;width:100%}
+.fg input:focus,.fg select:focus{border-color:var(--accent2)}
+.fg select option{background:var(--s1)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid2.full{grid-column:1/-1}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:0}
+.ph-builder{margin-top:18px}
+.ph-builder-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.ph-builder-hd span{font-size:13px;font-weight:700;color:var(--text)}
+.ph-inp{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;position:relative}
+.ph-num{position:absolute;top:10px;right:10px;width:20px;height:20px;background:var(--accent2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff}
+.ph-inp-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px;padding-top:6px}
+.ph-del{position:absolute;top:10px;left:10px;background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:15px}
+.ph-del:hover{color:var(--red)}
+.modal-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;border-top:1px solid var(--border);padding-top:18px}
+
+/* EMPTY */
+.empty{text-align:center;padding:50px;color:var(--text3)}
+.empty div{font-size:44px;margin-bottom:12px}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--s1);border:1px solid var(--border2);border-radius:10px;padding:12px 24px;font-size:13px;font-weight:600;opacity:0;transition:all .3s;z-index:9999;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(max-width:768px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .p-wrap{display:none}
+  .ph-grid{grid-template-columns:1fr 1fr}
+  .ph-inp-grid{grid-template-columns:1fr 1fr}
+  .form-grid{grid-template-columns:1fr}
+  header .btn span{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">🔗</div>
+    <h2>نظام إدارة المهام</h2>
+    <p>شبكات الفايبر — المكتب الفني</p>
+    <div class="login-tabs">
+      <button class="login-tab active" onclick="setRole('admin',this)">👑 Admin</button>
+      <button class="login-tab" onclick="setRole('viewer',this)">👁 Viewer</button>
+    </div>
+    <div class="login-field">
+      <label>كلمة المرور</label>
+      <input type="password" id="loginPass" placeholder="أدخل كلمة المرور" onkeydown="if(e&&e.key==='Enter')doLogin()">
+    </div>
+    <div class="login-hint">
+      🔑 Admin: <b>admin123</b>&nbsp;&nbsp;|&nbsp;&nbsp;👁 Viewer: <b>view123</b>
+    </div>
+    <button class="btn-login" onclick="doLogin()">دخول</button>
+    <div class="login-error" id="loginErr">❌ كلمة المرور غير صحيحة</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">🔗</div>
+      <div><h1>إدارة المهام</h1><span>شبكات الفايبر</span></div>
+    </div>
+    <span class="role-badge" id="roleBadge"></span>
+    <div class="ml-auto" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-ghost" onclick="document.getElementById('importFile').click()" title="استيراد">📂 <span>استيراد</span></button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(this)">
+      <button class="btn btn-green" onclick="exportExcel()">📊 <span>Excel</span></button>
+      <button class="btn btn-orange" onclick="exportPrint()">🖨 <span>PDF</span></button>
+      <button class="btn btn-primary" id="addTaskBtn" onclick="openAdd()">＋ <span>مهمة جديدة</span></button>
+      <button class="btn btn-ghost btn-sm" onclick="logout()" title="خروج">🚪</button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <!-- STATS -->
+  <div class="stats" id="stats"></div>
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <button class="filter-btn active" onclick="setFilter('all',this)">الكل</button>
+    <button class="filter-btn" onclick="setFilter('active',this)">🔵 جارية</button>
+    <button class="filter-btn" onclick="setFilter('pending',this)">🟡 معلقة</button>
+    <button class="filter-btn" onclick="setFilter('done',this)">🟢 مكتملة</button>
+    <button class="filter-btn" onclick="setFilter('blocked',this)">🔴 موقوفة</button>
+    <button class="filter-btn" onclick="setFilter('planned',this)">🟣 مخططة</button>
+    <div class="search"><span>🔍</span><input type="text" placeholder="بحث..." oninput="setSearch(this.value)"></div>
+  </div>
+  <!-- BOARD -->
+  <div class="board" id="board"></div>
+</div>
+</div>
+
+<!-- TASK MODAL (Add/Edit) -->
+<div class="overlay" id="taskModal">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">➕ مهمة جديدة</div>
+    <div class="form-grid">
+      <div class="fg" style="grid-column:1/-1">
+        <label>اسم المهمة *</label>
+        <input id="fName" placeholder="مثال: تمديد كابل فايبر — المنطقة A">
+      </div>
+      <div class="fg"><label>المشروع</label><input id="fProject" placeholder="اسم المشروع"></div>
+      <div class="fg"><label>المسؤول الرئيسي</label><input id="fOwner" placeholder="الاسم"></div>
+      <div class="fg">
+        <label>الأولوية</label>
+        <select id="fPrio"><option value="high">🔴 عالية</option><option value="medium" selected>🟡 متوسطة</option><option value="low">🟢 منخفضة</option></select>
+      </div>
+      <div class="fg">
+        <label>الحالة</label>
+        <select id="fStatus">
+          <option value="planned">🟣 مخططة</option><option value="active" selected>🔵 جارية</option>
+          <option value="pending">🟡 معلقة</option><option value="done">🟢 مكتملة</option><option value="blocked">🔴 موقوفة</option>
+        </select>
+      </div>
+    </div>
+    <div class="ph-builder">
+      <div class="ph-builder-hd">
+        <span>⚙️ مراحل التنفيذ</span>
+        <button class="btn btn-ghost btn-sm" onclick="addPhInput()">＋ مرحلة</button>
+      </div>
+      <div id="phInputs"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('taskModal')">إلغاء</button>
+      <button class="btn btn-primary" onclick="saveTask()">✅ حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ====== AUTH ======
+const ROLES = { admin: 'admin123', viewer: 'view123' };
+let currentRole = 'viewer';
+let loginTarget = 'admin';
+function setRole(r, btn) {
+  loginTarget = r;
+  document.querySelectorAll('.login-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function doLogin() {
+  const pass = document.getElementById('loginPass').value;
+  if (ROLES[loginTarget] === pass) {
+    currentRole = loginTarget;
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    const badge = document.getElementById('roleBadge');
+    badge.textContent = currentRole === 'admin' ? '👑 Admin' : '👁 Viewer';
+    badge.className = 'role-badge ' + (currentRole === 'admin' ? 'role-admin' : 'role-viewer');
+    document.getElementById('addTaskBtn').style.display = currentRole === 'admin' ? '' : 'none';
+    renderAll();
+  } else {
+    document.getElementById('loginErr').style.display = 'block';
+    setTimeout(() => document.getElementById('loginErr').style.display = 'none', 2000);
+  }
+}
+function logout() {
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginPass').value = '';
+}
+document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+// ====== DATA ======
+let tasks = JSON.parse(localStorage.getItem('fiberTasks_v2') || 'null');
+if (!tasks) tasks = getDemoData();
+let filter = 'all', search = '', phCount = 0, editIdx = -1;
+
+const SL = { done:'مكتملة', active:'جارية', pending:'معلقة', blocked:'موقوفة', planned:'مخططة' };
+const AVC = ['#0057e7','#00c6ff','#00e676','#ffab00','#a78bfa','#ff4d4d','#00bcd4','#ff6b9d'];
+function ini(n) { if(!n)return'?'; const p=n.trim().split(' '); return p.length>1?p[0][0]+p[1][0]:p[0].slice(0,2); }
+function avc(n) { let h=0; for(let c of(n||''))h=(h*31+c.charCodeAt(0))%AVC.length; return AVC[h]; }
+function pct(phases) { if(!phases||!phases.length)return 0; return Math.round(phases.filter(p=>p.status==='done').length/phases.length*100); }
+function save() { localStorage.setItem('fiberTasks_v2', JSON.stringify(tasks)); }
+
+// ====== STATS ======
+function renderStats() {
+  const s = document.getElementById('stats');
+  const total=tasks.length, done=tasks.filter(t=>t.status==='done').length,
+        active=tasks.filter(t=>t.status==='active').length,
+        blocked=tasks.filter(t=>t.status==='blocked').length,
+        pending=tasks.filter(t=>t.status==='pending').length;
+  const avgPct = tasks.length ? Math.round(tasks.reduce((a,t)=>a+pct(t.phases),0)/tasks.length) : 0;
+  s.innerHTML = `
+    <div class="sc" style="--c:var(--accent)"><div class="sc-label">إجمالي المهام</div><div class="sc-val">${total}</div><div class="sc-sub">مسجلة</div></div>
+    <div class="sc" style="--c:var(--green)"><div class="sc-label">مكتملة</div><div class="sc-val">${done}</div><div class="sc-sub">تم الإنجاز</div></div>
+    <div class="sc" style="--c:var(--accent)"><div class="sc-label">جارية</div><div class="sc-val">${active}</div><div class="sc-sub">قيد التنفيذ</div></div>
+    <div class="sc" style="--c:var(--orange)"><div class="sc-label">معلقة</div><div class="sc-val">${pending}</div><div class="sc-sub">تحتاج متابعة</div></div>
+    <div class="sc" style="--c:var(--red)"><div class="sc-label">موقوفة</div><div class="sc-val">${blocked}</div><div class="sc-sub">تحتاج تدخل</div></div>`;
+}
+
+// ====== BOARD ======
+function renderBoard() {
+  const board = document.getElementById('board');
+  let list = tasks.filter(t => {
+    const mf = filter==='all'||t.status===filter;
+    const ms = !search||t.name.includes(search)||(t.project||'').includes(search)||(t.owner||'').includes(search);
+    return mf && ms;
+  });
+  if (!list.length) { board.innerHTML='<div class="empty"><div>📋</div><p>لا توجد مهام</p></div>'; return; }
+  board.innerHTML = list.map(task => {
+    const ri = tasks.indexOf(task);
+    const p = pct(task.phases), ini_ = ini(task.owner), col = avc(task.owner);
+    const isAdmin = currentRole === 'admin';
+    return `
+    <div class="task-card" id="tc-${ri}">
+      <div class="task-head" onclick="toggleCard(${ri})">
+        <div class="prio-dot prio-${task.priority}">●</div>
+        <div class="task-info">
+          <div class="task-name">${task.name}</div>
+          <div class="task-sub">
+            ${task.project?`<span style="font-size:10px;color:var(--text2)">📁 ${task.project}</span>`:''}
+            <span class="badge s-${task.status}">${SL[task.status]}</span>
+            <span style="font-size:10px;color:var(--text3)">⚙️ ${(task.phases||[]).length} مراحل</span>
+          </div>
+        </div>
+        <div class="p-wrap">
+          <div class="pbar"><div class="pfill" style="width:${p}%"></div></div>
+          <span class="ppct">${p}%</span>
+        </div>
+        <div class="owner-chip">
+          <div class="av" style="background:${col}18;color:${col};border-color:${col}30">${ini_}</div>
+          <span style="font-size:10px;color:var(--text2);max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${task.owner||'—'}</span>
+        </div>
+        <div class="task-actions" onclick="event.stopPropagation()">
+          ${isAdmin?`<button class="icon-btn" onclick="openEdit(${ri})" title="تعديل">✏️</button>`:''}
+          ${isAdmin?`<button class="icon-btn" onclick="delTask(${ri})" title="حذف">🗑</button>`:''}
+        </div>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="phases-wrap">${renderPhases(task.phases||[], ri)}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderPhases(phases, ti) {
+  if (!phases.length) return '<div style="padding:16px;text-align:center;color:var(--text3);font-size:12px">لا توجد مراحل</div>';
+  const isAdmin = currentRole === 'admin';
+  return `<p class="ph-title">مراحل التنفيذ</p>
+  <div class="ph-timeline">${phases.map((ph,pi)=>`
+    <div class="ph-row">
+      <div class="ph-dot pd-${ph.status}">${pi+1}</div>
+      <div class="ph-content">
+        <div class="ph-hd">
+          <span class="ph-name">${ph.name}</span>
+          <span class="badge s-${ph.status}">${SL[ph.status]}</span>
+          ${isAdmin?`<select class="ph-status-sel" onchange="updatePhase(${ti},${pi},this.value)">
+            <option value="planned" ${ph.status==='planned'?'selected':''}>مخططة</option>
+            <option value="active" ${ph.status==='active'?'selected':''}>جارية</option>
+            <option value="pending" ${ph.status==='pending'?'selected':''}>معلقة</option>
+            <option value="done" ${ph.status==='done'?'selected':''}>مكتملة</option>
+            <option value="blocked" ${ph.status==='blocked'?'selected':''}>موقوفة</option>
+          </select>`:''}
+        </div>
+        <div class="ph-grid">
+          <div class="ph-item"><label>📅 البداية</label><span>${ph.start||'—'}</span></div>
+          <div class="ph-item"><label>🏁 النهاية</label><span>${ph.end||'—'}</span></div>
+          <div class="ph-item"><label>👤 المسؤول</label><span>${ph.responsible||'—'}</span></div>
+        </div>
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+
+function renderAll() { renderStats(); renderBoard(); }
+
+// ====== INTERACTIONS ======
+function toggleCard(i) { document.getElementById(`tc-${i}`)?.classList.toggle('expanded'); }
+function setFilter(f, btn) {
+  filter = f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderBoard();
+}
+function setSearch(v) { search=v; renderBoard(); }
+
+function updatePhase(ti, pi, val) {
+  tasks[ti].phases[pi].status = val;
+  const ph = tasks[ti].phases;
+  if (ph.every(p=>p.status==='done')) tasks[ti].status='done';
+  else if (ph.some(p=>p.status==='blocked')) tasks[ti].status='blocked';
+  else if (ph.some(p=>p.status==='active')) tasks[ti].status='active';
+  save(); renderAll();
+  setTimeout(()=>{ document.getElementById(`tc-${ti}`)?.classList.add('expanded'); },10);
+  toast('✅ تم تحديث حالة المرحلة');
+}
+
+function delTask(i) {
+  if (confirm('حذف هذه المهمة؟')) { tasks.splice(i,1); save(); renderAll(); toast('🗑 تم الحذف'); }
+}
+
+// ====== MODAL ======
+function openAdd() {
+  editIdx=-1; phCount=0;
+  document.getElementById('phInputs').innerHTML='';
+  document.getElementById('fName').value='';
+  document.getElementById('fProject').value='';
+  document.getElementById('fOwner').value='';
+  document.getElementById('fPrio').value='medium';
+  document.getElementById('fStatus').value='active';
+  document.getElementById('modalTitle').textContent='➕ مهمة جديدة';
+  addPhInput();
+  openModal('taskModal');
+}
+
+function openEdit(i) {
+  const t = tasks[i]; editIdx=i;
+  phCount=0; document.getElementById('phInputs').innerHTML='';
+  document.getElementById('fName').value=t.name;
+  document.getElementById('fProject').value=t.project||'';
+  document.getElementById('fOwner').value=t.owner||'';
+  document.getElementById('fPrio').value=t.priority;
+  document.getElementById('fStatus').value=t.status;
+  document.getElementById('modalTitle').textContent='✏️ تعديل المهمة';
+  (t.phases||[]).forEach(ph=>addPhInput(ph));
+  if(!t.phases||!t.phases.length) addPhInput();
+  openModal('taskModal');
+}
+
+function addPhInput(data={}) {
+  phCount++;
+  const c = document.getElementById('phInputs');
+  const d = document.createElement('div');
+  d.className='ph-inp'; d.id=`pi-${phCount}`;
+  d.innerHTML=`
+    <span class="ph-num">${phCount}</span>
+    <button class="ph-del" onclick="this.closest('.ph-inp').remove()" title="حذف">✕</button>
+    <div class="ph-inp-grid">
+      <div class="fg"><label>اسم المرحلة</label><input id="pi${phCount}-n" value="${data.name||''}" placeholder="المسح الميداني..."></div>
+      <div class="fg"><label>تاريخ البدء</label><input type="date" id="pi${phCount}-s" value="${data.start||''}"></div>
+      <div class="fg"><label>تاريخ الانتهاء</label><input type="date" id="pi${phCount}-e" value="${data.end||''}"></div>
+      <div class="fg"><label>المسؤول</label><input id="pi${phCount}-r" value="${data.responsible||''}" placeholder="الاسم"></div>
+    </div>
+    <div class="fg" style="margin-top:8px"><label>الحالة</label>
+      <select id="pi${phCount}-st">
+        <option value="planned" ${(data.status||'planned')==='planned'?'selected':''}>مخططة</option>
+        <option value="active" ${data.status==='active'?'selected':''}>جارية</option>
+        <option value="pending" ${data.status==='pending'?'selected':''}>معلقة</option>
+        <option value="done" ${data.status==='done'?'selected':''}>مكتملة</option>
+        <option value="blocked" ${data.status==='blocked'?'selected':''}>موقوفة</option>
+      </select>
+    </div>`;
+  c.appendChild(d);
+}
+
+function saveTask() {
+  const name = document.getElementById('fName').value.trim();
+  if (!name) { toast('⚠️ يرجى إدخال اسم المهمة'); return; }
+  const phases=[];
+  document.querySelectorAll('.ph-inp').forEach(row=>{
+    const id=row.id.split('-')[1];
+    const n=document.getElementById(`pi${id}-n`)?.value.trim();
+    if(n) phases.push({name:n,start:document.getElementById(`pi${id}-s`)?.value||'',end:document.getElementById(`pi${id}-e`)?.value||'',responsible:document.getElementById(`pi${id}-r`)?.value.trim()||'',status:document.getElementById(`pi${id}-st`)?.value||'planned'});
+  });
+  const task={id:Date.now(),name,project:document.getElementById('fProject').value.trim(),owner:document.getElementById('fOwner').value.trim(),priority:document.getElementById('fPrio').value,status:document.getElementById('fStatus').value,phases,createdAt:new Date().toISOString()};
+  if(editIdx>=0) tasks[editIdx]={...tasks[editIdx],...task};
+  else tasks.push(task);
+  save(); renderAll(); closeModal('taskModal');
+  toast(editIdx>=0?'✅ تم التعديل':'✅ تم إضافة المهمة');
+}
+
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.getElementById('taskModal').addEventListener('click',e=>{if(e.target===document.getElementById('taskModal'))closeModal('taskModal');});
+
+// ====== EXPORT ======
+function exportExcel() {
+  const wb = XLSX.utils.book_new();
+  // Sheet 1: Tasks summary
+  const rows=[['#','المهمة','المشروع','المسؤول','الأولوية','الحالة','الإنجاز %','عدد المراحل']];
+  tasks.forEach((t,i)=>rows.push([i+1,t.name,t.project||'',t.owner||'',{high:'عالية',medium:'متوسطة',low:'منخفضة'}[t.priority],SL[t.status],pct(t.phases)+'%',(t.phases||[]).length]));
+  const ws1=XLSX.utils.aoa_to_sheet(rows);
+  ws1['!cols']=[{wch:4},{wch:40},{wch:20},{wch:16},{wch:10},{wch:10},{wch:10},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws1,'ملخص المهام');
+  // Sheet 2: Phases detail
+  const rows2=[['المهمة','المشروع','#','المرحلة','المسؤول','البداية','النهاية','الحالة']];
+  tasks.forEach(t=>(t.phases||[]).forEach((ph,pi)=>rows2.push([t.name,t.project||'',pi+1,ph.name,ph.responsible||'',ph.start||'',ph.end||'',SL[ph.status]])));
+  const ws2=XLSX.utils.aoa_to_sheet(rows2);
+  ws2['!cols']=[{wch:30},{wch:18},{wch:4},{wch:30},{wch:16},{wch:12},{wch:12},{wch:10}];
+  XLSX.utils.book_append_sheet(wb,ws2,'تفاصيل المراحل');
+  XLSX.writeFile(wb,`مهام-فايبر-${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('📊 تم تصدير Excel');
+}
+
+function exportPrint() {
+  const w=window.open('','_blank');
+  const now=new Date().toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric'});
+  let html=`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8">
+  <title>تقرير المهام</title>
+  <style>
+    body{font-family:Arial,sans-serif;direction:rtl;padding:20px;color:#111;font-size:12px}
+    h1{font-size:20px;margin-bottom:4px} .sub{color:#666;font-size:11px;margin-bottom:20px}
+    .stats{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+    .st{border:1px solid #ddd;border-radius:6px;padding:10px 16px;text-align:center;min-width:80px}
+    .st b{display:block;font-size:22px} .st span{font-size:10px;color:#666}
+    table{width:100%;border-collapse:collapse;margin-bottom:24px}
+    th{background:#0057e7;color:#fff;padding:8px;text-align:right;font-size:11px}
+    td{padding:7px 8px;border-bottom:1px solid #eee;font-size:11px;vertical-align:top}
+    tr:nth-child(even) td{background:#f8f9fa}
+    .ph-table{margin:4px 0;width:100%;border-collapse:collapse}
+    .ph-table td{padding:4px 6px;font-size:10px;border:1px solid #eee}
+    .ph-table th{background:#e8f0fe;padding:4px 6px;font-size:10px;font-weight:bold;border:1px solid #ddd}
+    .badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:bold}
+    .s-done{background:#e8f5e9;color:#2e7d32} .s-active{background:#e3f2fd;color:#1565c0}
+    .s-pending{background:#fff8e1;color:#f57f17} .s-blocked{background:#ffebee;color:#c62828} .s-planned{background:#f3e5f5;color:#6a1b9a}
+    @media print{button{display:none}}
+  </style></head><body>
+  <button onclick="window.print()" style="margin-bottom:16px;padding:8px 20px;background:#0057e7;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">🖨 طباعة</button>
+  <h1>📋 تقرير المهام — شبكات الفايبر</h1>
+  <div class="sub">تاريخ التقرير: ${now} | إجمالي المهام: ${tasks.length}</div>
+  <div class="stats">
+    <div class="st"><b>${tasks.length}</b><span>الكل</span></div>
+    <div class="st"><b style="color:#2e7d32">${tasks.filter(t=>t.status==='done').length}</b><span>مكتملة</span></div>
+    <div class="st"><b style="color:#1565c0">${tasks.filter(t=>t.status==='active').length}</b><span>جارية</span></div>
+    <div class="st"><b style="color:#f57f17">${tasks.filter(t=>t.status==='pending').length}</b><span>معلقة</span></div>
+    <div class="st"><b style="color:#c62828">${tasks.filter(t=>t.status==='blocked').length}</b><span>موقوفة</span></div>
+  </div>
+  <table><thead><tr><th>#</th><th>المهمة</th><th>المشروع</th><th>المسؤول</th><th>الحالة</th><th>الإنجاز</th><th>المراحل</th></tr></thead><tbody>`;
+  tasks.forEach((t,i)=>{
+    html+=`<tr><td>${i+1}</td><td><b>${t.name}</b></td><td>${t.project||'—'}</td><td>${t.owner||'—'}</td>
+    <td><span class="badge s-${t.status}">${SL[t.status]}</span></td><td><b>${pct(t.phases)}%</b></td>
+    <td><table class="ph-table"><thead><tr><th>#</th><th>المرحلة</th><th>المسؤول</th><th>البداية</th><th>النهاية</th><th>الحالة</th></tr></thead><tbody>
+    ${(t.phases||[]).map((ph,pi)=>`<tr><td>${pi+1}</td><td>${ph.name}</td><td>${ph.responsible||'—'}</td><td>${ph.start||'—'}</td><td>${ph.end||'—'}</td><td><span class="badge s-${ph.status}">${SL[ph.status]}</span></td></tr>`).join('')}
+    </tbody></table></td></tr>`;
+  });
+  html+='</tbody></table></body></html>';
+  w.document.write(html); w.document.close();
+  toast('🖨 تم فتح نافذة الطباعة');
+}
+
+// ====== IMPORT JSON ======
+function importJSON(input) {
+  const file=input.files[0]; if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try {
+      const data=JSON.parse(e.target.result);
+      if(!Array.isArray(data)) throw new Error();
+      if(confirm(`استيراد ${data.length} مهمة؟ (سيتم الدمج مع الموجود)`)) {
+        tasks=[...tasks,...data]; save(); renderAll();
+        toast(`✅ تم استيراد ${data.length} مهمة`);
+      }
+    } catch { toast('❌ ملف JSON غير صالح'); }
+  };
+  r.readAsText(file);
+  input.value='';
+}
+
+// ====== TOAST ======
+function toast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// ====== DEMO DATA ======
+function getDemoData() {
+  return [
+    {id:1,name:'تمديد كابل فايبر — المنطقة الصناعية A',project:'مشروع الحزام الصناعي',priority:'high',status:'active',owner:'محمد السيد',createdAt:new Date().toISOString(),phases:[
+      {name:'المسح الميداني وتحديد المسار',start:'2025-01-05',end:'2025-01-10',responsible:'أحمد علي',status:'done'},
+      {name:'حفر وتجهيز القنوات',start:'2025-01-12',end:'2025-01-20',responsible:'محمد السيد',status:'done'},
+      {name:'سحب وتثبيت الكابل',start:'2025-01-21',end:'2025-01-28',responsible:'خالد حسن',status:'active'},
+      {name:'الوصلات والاختبار OTDR',start:'2025-01-29',end:'2025-02-03',responsible:'أحمد علي',status:'planned'},
+      {name:'التسليم النهائي',start:'2025-02-04',end:'2025-02-06',responsible:'محمد السيد',status:'planned'}
+    ]},
+    {id:2,name:'تركيب ODF وتوزيع النقاط — مبنى الإدارة',project:'الشبكة الداخلية',priority:'medium',status:'pending',owner:'سارة محمود',createdAt:new Date().toISOString(),phases:[
+      {name:'تجهيز غرفة الشبكة',start:'2025-01-08',end:'2025-01-12',responsible:'يوسف عمر',status:'done'},
+      {name:'تركيب ODF والـ Patch Panel',start:'2025-01-13',end:'2025-01-16',responsible:'سارة محمود',status:'pending'},
+      {name:'توزيع النقاط للطوابق',start:'2025-01-17',end:'2025-01-24',responsible:'كريم أحمد',status:'planned'},
+      {name:'اختبار وتوثيق',start:'2025-01-25',end:'2025-01-27',responsible:'سارة محمود',status:'planned'}
+    ]},
+    {id:3,name:'ربط نقطة التجميع — برج B الجديد',project:'توسعة الشبكة 2025',priority:'high',status:'planned',owner:'طارق فاروق',createdAt:new Date().toISOString(),phases:[
+      {name:'دراسة جدوى المسار',start:'2025-02-01',end:'2025-02-05',responsible:'طارق فاروق',status:'planned'},
+      {name:'استخراج التصاريح',start:'2025-02-06',end:'2025-02-15',responsible:'مروة كمال',status:'planned'},
+      {name:'التنفيذ الميداني',start:'2025-02-16',end:'2025-02-28',responsible:'طارق فاروق',status:'planned'}
+    ]}
+  ];
+}
+</script>
+</body>
+</html>
