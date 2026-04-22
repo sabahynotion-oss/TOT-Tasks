@@ -288,9 +288,9 @@ header{background:rgba(13,22,38,.96);border-bottom:1px solid var(--border);paddi
   <div class="modal">
     <div class="modal-title" id="taskModalTitle">➕ مهمة جديدة</div>
     <div class="form-grid">
-      <div class="fg span2"><label>اسم المهمة *</label><input id="tName" placeholder="مثال: تمديد كابل فايبر — المنطقة A"></div>
+      <div class="fg span2"><label>اسم المهمة <span style="color:var(--red)">*</span></label><input id="tName" placeholder="مثال: تمديد كابل فايبر — المنطقة A"></div>
       <div class="fg"><label>المشروع</label><select id="tProject"></select></div>
-      <div class="fg"><label>المسؤول الرئيسي</label><input id="tOwner" placeholder="الاسم"></div>
+      <div class="fg"><label>المسؤول الرئيسي <span style="color:var(--red)">*</span></label><input id="tOwner" placeholder="الاسم"></div>
       <div class="fg"><label>الأولوية</label>
         <select id="tPrio"><option value="high">🔴 عالية</option><option value="medium" selected>🟡 متوسطة</option><option value="low">🟢 منخفضة</option></select>
       </div>
@@ -337,10 +337,35 @@ function avc(n){let h=0;for(let c of(n||''))h=(h*31+c.charCodeAt(0))%AVC.length;
 function pct(ph){if(!ph||!ph.length)return 0;return Math.round(ph.filter(p=>p.status==='done').length/ph.length*100);}
 function projTasks(pid){return data.tasks.filter(t=>t.projectId===pid);}
 
+// ===== CODE GENERATION =====
+function projCode(projName){
+  // Extract letter after FTTH-
+  const m=(projName||'').match(/FTTH-(.)/i);
+  return m?m[1].toUpperCase():'X';
+}
+function getNextTaskNum(projectId){
+  const tasks=data.tasks.filter(t=>t.projectId===projectId);
+  if(!tasks.length)return 1;
+  const nums=tasks.map(t=>{
+    const m=(t.code||'').match(/T(\d+)/);
+    return m?parseInt(m[1]):0;
+  });
+  return Math.max(...nums)+1;
+}
+function generateTaskCode(projectId, version=1){
+  const proj=data.projects.find(p=>p.id===projectId);
+  if(!proj)return'X-T001-V1';
+  const pc=projCode(proj.name);
+  const num=getNextTaskNum(projectId);
+  return `${pc}-T${String(num).padStart(3,'0')}-V${version}`;
+}
+function generatePhaseCode(taskCode, phaseIndex){
+  return `${taskCode}-S${String(phaseIndex+1).padStart(2,'0')}`;
+}
+
 function calcDelay(planned, actual){
   if(!planned||!actual)return null;
-  const p=new Date(planned), a=new Date(actual);
-  return Math.round((a-p)/(1000*60*60*24));
+  return new Date(actual)-new Date(planned); // returns ms
 }
 function delayBadge(days){
   if(days===null)return'';
@@ -486,7 +511,11 @@ function renderTaskBoard(el,tasks,showProj){
       <div class="task-head" onclick="toggleCard('${task.id}')">
         <div class="prio-dot prio-${task.priority}">●</div>
         <div class="task-info">
-          <div class="task-name">${task.name}</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+            <div class="task-name">${task.name}</div>
+            ${task.code?`<span style="font-size:10px;font-weight:800;color:var(--accent2);background:rgba(0,87,231,.12);border:1px solid rgba(0,87,231,.25);padding:1px 8px;border-radius:6px;letter-spacing:.5px">${task.code}</span>`:''}
+            ${(task.version||1)>1?`<span style="font-size:10px;font-weight:800;color:var(--orange);background:rgba(255,171,0,.1);border:1px solid rgba(255,171,0,.2);padding:1px 7px;border-radius:6px">V${task.version}</span>`:''}
+          </div>
           <div class="task-sub">
             ${showProj&&proj?`<span style="font-size:10px;display:inline-flex;align-items:center;gap:4px"><span style="width:16px;height:16px;border-radius:4px;background:${proj.color||'#0057e7'}22;color:${proj.color||'#0057e7'};font-size:9px;font-weight:900;display:inline-flex;align-items:center;justify-content:center">${projLetter(proj.name)}</span><span style="color:var(--text2)">${proj.name}</span></span>`:''}
             <span class="badge s-${task.status}">${SL[task.status]}</span>
@@ -517,6 +546,7 @@ function renderPhases(phases,tid){
       <div class="ph-dot pd-${ph.status}">${pi+1}</div>
       <div class="ph-content">
         <div class="ph-hd">
+          ${ph.code?`<span style="font-size:9px;font-weight:800;color:var(--text3);background:var(--s3);padding:1px 7px;border-radius:5px;letter-spacing:.3px">${ph.code}</span>`:''}
           <span class="ph-name">${ph.name}</span>
           <span class="badge s-${ph.status}">${SL[ph.status]}</span>
           ${isAdmin?`<select class="ph-sel" onchange="updatePhase('${tid}',${pi},this.value)">
@@ -528,12 +558,23 @@ function renderPhases(phases,tid){
           </select>`:''}
         </div>
         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;background:var(--s2);border-radius:8px;padding:10px">
-          <div class="ph-item"><label>📅 بداية مخططة</label><span>${ph.start||'—'}</span></div>
-          <div class="ph-item"><label>🏁 نهاية مخططة</label><span>${ph.end||'—'}</span></div>
-          <div class="ph-item"><label>✅ بداية فعلية</label><span style="color:${ph.actualStart?'var(--green)':'var(--text3)'}">${ph.actualStart||'—'}</span></div>
-          <div class="ph-item"><label>✅ نهاية فعلية</label><span style="color:${ph.actualEnd?'var(--green)':'var(--text3)'}">${ph.actualEnd||'—'}</span></div>
+          <div class="ph-item"><label>📅 بداية مخططة</label><span>${ph.start?ph.start.replace('T',' ').slice(0,16):'—'}</span></div>
+          <div class="ph-item"><label>🏁 نهاية مخططة</label><span>${ph.end?ph.end.replace('T',' ').slice(0,16):'—'}</span></div>
+          <div class="ph-item"><label>✅ بداية فعلية</label><span style="color:${ph.actualStart?'var(--green)':'var(--text3)'}">${ph.actualStart?ph.actualStart.replace('T',' ').slice(0,16):'—'}</span></div>
+          <div class="ph-item"><label>✅ نهاية فعلية</label><span style="color:${ph.actualEnd?'var(--green)':'var(--text3)'}">${ph.actualEnd?ph.actualEnd.replace('T',' ').slice(0,16):'—'}</span></div>
           <div class="ph-item"><label>👤 المسؤول</label><span>${ph.responsible||'—'}</span></div>
-          <div class="ph-item"><label>⏱ التأخير</label><span>${(()=>{const d=calcDelay(ph.end,ph.actualEnd);return d===null?'<span style="color:var(--text3)">لم يُسجل بعد</span>':d===0?'<span style="color:var(--green)">في الموعد</span>':d>0?'<span style="color:var(--red)">+'+d+' يوم</span>':'<span style="color:var(--accent)">'+d+' يوم</span>';})()}</span></div>
+          <div class="ph-item"><label>⏱ التأخير / الإنجاز</label><span>${(()=>{
+            if(!ph.end||!ph.actualEnd)return '<span style="color:var(--text3)">لم يُسجل بعد</span>';
+            const planned=new Date(ph.end), actual=new Date(ph.actualEnd);
+            const diffMs=actual-planned;
+            const diffDays=Math.round(diffMs/(1000*60*60*24));
+            const diffHrs=Math.round(diffMs/(1000*60*60));
+            const absD=Math.abs(diffDays), absH=Math.abs(diffHrs)%24;
+            const label=absD>0?(absD+' يوم '+(absH>0?absH+' ساعة':'')):Math.abs(diffHrs)+' ساعة';
+            if(diffMs===0)return '<span style="color:var(--green);font-weight:700">✅ في الموعد</span>';
+            if(diffMs>0)return '<span style="color:var(--red);font-weight:700">⏰ تأخير '+label+'</span>';
+            return '<span style="color:var(--accent);font-weight:700">⚡ مبكر '+label+'</span>';
+          })()}</span></div>
         </div>
       </div>
     </div>`).join('')}</div>`;
@@ -669,25 +710,97 @@ function addPhInput(d={}){
       </div>
       <div></div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-top:8px">
-      <div class="fg"><label>📅 بداية مخططة</label><input type="date" id="pi${phCount}-s" value="${d.start||''}"></div>
-      <div class="fg"><label>🏁 نهاية مخططة</label><input type="date" id="pi${phCount}-e" value="${d.end||''}"></div>
-      <div class="fg"><label>✅ بداية فعلية</label><input type="date" id="pi${phCount}-as" value="${d.actualStart||''}"></div>
-      <div class="fg"><label>✅ نهاية فعلية</label><input type="date" id="pi${phCount}-ae" value="${d.actualEnd||''}"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <div class="fg"><label>📅 بداية مخططة *</label><input type="datetime-local" id="pi${phCount}-s" value="${d.start||''}" style="border-color:rgba(0,87,231,.4)"></div>
+      <div class="fg"><label>🏁 نهاية مخططة *</label><input type="datetime-local" id="pi${phCount}-e" value="${d.end||''}" style="border-color:rgba(0,87,231,.4)"></div>
+      <div class="fg"><label>✅ بداية فعلية</label><input type="datetime-local" id="pi${phCount}-as" value="${d.actualStart||''}"></div>
+      <div class="fg"><label>✅ نهاية فعلية</label><input type="datetime-local" id="pi${phCount}-ae" value="${d.actualEnd||''}"></div>
     </div>
 `;
   c.appendChild(div);
 }
 function saveTask(){
   const name=document.getElementById('tName').value.trim();
-  if(!name){toast('⚠️ أدخل اسم المهمة');return;}
+  const owner=document.getElementById('tOwner').value.trim();
+  const projectId=document.getElementById('tProject').value;
+
+  // === VALIDATION ===
+  if(!projectId){toast('⚠️ يرجى اختيار المشروع');return;}
+  if(!name){toast('⚠️ يرجى إدخال اسم المهمة');return;}
+  if(!owner){toast('⚠️ يرجى إدخال المسؤول الرئيسي');return;}
+
+  const phaseRows=document.querySelectorAll('.ph-inp');
   const phases=[];
-  document.querySelectorAll('.ph-inp').forEach(row=>{
+  let phaseError='';
+
+  phaseRows.forEach((row,idx)=>{
     const id=row.id.split('-')[1];
     const n=document.getElementById(`pi${id}-n`)?.value.trim();
-    if(n)phases.push({name:n,start:document.getElementById(`pi${id}-s`)?.value||'',end:document.getElementById(`pi${id}-e`)?.value||'',actualStart:document.getElementById(`pi${id}-as`)?.value||'',actualEnd:document.getElementById(`pi${id}-ae`)?.value||'',responsible:document.getElementById(`pi${id}-r`)?.value.trim()||'',status:document.getElementById(`pi${id}-st`)?.value||'planned'});
+    if(!n)return;
+    const s=document.getElementById(`pi${id}-s`)?.value||'';
+    const e=document.getElementById(`pi${id}-e`)?.value||'';
+    const r=document.getElementById(`pi${id}-r`)?.value.trim()||'';
+    const as=document.getElementById(`pi${id}-as`)?.value||'';
+    const ae=document.getElementById(`pi${id}-ae`)?.value||'';
+    const st=document.getElementById(`pi${id}-st`)?.value||'planned';
+
+    // Validate required fields per phase
+    if(!s){phaseError=`⚠️ أدخل تاريخ البداية المخططة للمرحلة ${idx+1}`;return;}
+    if(!e){phaseError=`⚠️ أدخل تاريخ النهاية المخططة للمرحلة ${idx+1}`;return;}
+    if(!r){phaseError=`⚠️ أدخل المسؤول عن المرحلة ${idx+1}`;return;}
+
+    // Validate end >= start
+    if(s&&e&&new Date(e)<new Date(s)){phaseError=`⚠️ تاريخ نهاية المرحلة ${idx+1} قبل تاريخ البداية`;return;}
+
+    phases.push({name:n,start:s,end:e,actualStart:as,actualEnd:ae,responsible:r,status:st});
   });
-  const task={id:editTaskId||'t'+Date.now(),name,projectId:document.getElementById('tProject').value,owner:document.getElementById('tOwner').value.trim(),priority:document.getElementById('tPrio').value,status:document.getElementById('tStatus').value,phases,createdAt:new Date().toISOString()};
+
+  if(phaseError){toast(phaseError);return;}
+  if(!phases.length){toast('⚠️ أضف مرحلة واحدة على الأقل');return;}
+
+  // === SEQUENTIAL DATE VALIDATION ===
+  for(let i=1;i<phases.length;i++){
+    if(phases[i].start && phases[i-1].end){
+      if(new Date(phases[i].start) < new Date(phases[i-1].end)){
+        const ph1end=phases[i-1].end.replace('T',' ').slice(0,16);
+        const ph2start=phases[i].start.replace('T',' ').slice(0,16);
+        toast(`⚠️ المرحلة ${i+1} تبدأ (${ph2start}) قبل انتهاء المرحلة ${i} (${ph1end})`);return;
+      }
+    }
+  }
+
+  // === CODE GENERATION ===
+  let taskCode, version=1;
+  if(editTaskId){
+    const existing=data.tasks.find(t=>t.id===editTaskId);
+    taskCode=existing?.code||generateTaskCode(projectId,version);
+    version=existing?.version||1;
+    // If task was 'done' and now adding new phases = new version
+    if(existing?.status==='done' && document.getElementById('tStatus').value!=='done'){
+      version=(existing.version||1)+1;
+      taskCode=taskCode.replace(/V\d+/,`V${version}`);
+    }
+  } else {
+    taskCode=generateTaskCode(projectId,version);
+  }
+
+  // Add phase codes
+  phases.forEach((ph,i)=>{ph.code=generatePhaseCode(taskCode,i);});
+
+  const task={
+    id:editTaskId||'t'+Date.now(),
+    code:taskCode,
+    version,
+    name,
+    projectId,
+    owner,
+    priority:document.getElementById('tPrio').value,
+    status:document.getElementById('tStatus').value,
+    phases,
+    createdAt:editTaskId?(data.tasks.find(t=>t.id===editTaskId)?.createdAt||new Date().toISOString()):new Date().toISOString(),
+    updatedAt:new Date().toISOString()
+  };
+
   if(editTaskId){const i=data.tasks.findIndex(t=>t.id===editTaskId);if(i>=0)data.tasks[i]=task;}
   else data.tasks.push(task);
   save();renderAll();closeModal('taskModal');toast(editTaskId?'✅ تم التعديل':'✅ تم إضافة المهمة');
