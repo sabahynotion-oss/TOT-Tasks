@@ -398,9 +398,7 @@ let filter='all',search='',taskFilter='all',taskSearch='',allTaskFilter='all';
 let editProjId=null,editTaskId=null,phCount=0,selColor=COLORS[0];
 
 function save(){
-  // Save to localStorage as backup
-  localStorage.setItem('fiberData_v6', JSON.stringify(data));
-  // Save to Firestore for real-time sync
+  // Firestore only — no localStorage
   if(window.saveToCloud) window.saveToCloud(data);
 }
 function ini(n){if(!n)return'?';const p=n.trim().split(' ');return p.length>1?p[0][0]+p[1][0]:p[0].slice(0,2);}
@@ -1041,11 +1039,52 @@ function migrateData(){
   save();
 }
 
-// INIT
-(function(){
-  const saved=sessionStorage.getItem('fiberRole');
-  if(saved){currentRole=saved;document.getElementById('loginScreen').style.display='none';document.getElementById('app').style.display='block';initApp();migrateData();renderAll();}
-})();
+// ===== FIRESTORE-ONLY INIT =====
+// Clear localStorage completely to avoid conflicts
+try { localStorage.clear(); } catch(e){}
+
+function bootApp(){
+  const saved = sessionStorage.getItem('fiberRole');
+  if(saved){
+    currentRole = saved;
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    initApp();
+    document.getElementById('allTasksBoard').innerHTML = '<div class="empty"><div>🔄</div><p>جاري التحميل...</p></div>';
+  }
+}
+
+function startRealtimeSync(){
+  if(!window.listenCloud) return;
+  window.listenCloud(function(cloudData){
+    if(cloudData && (cloudData.projects?.length || cloudData.tasks?.length)){
+      data = cloudData;
+    }
+    const si = document.getElementById('syncIndicator');
+    if(si) si.style.display = '';
+    renderAll();
+  });
+}
+
+document.addEventListener('firebaseReady', async function(){
+  const cloudData = await window.loadCloud();
+  if(cloudData && (cloudData.projects?.length || cloudData.tasks?.length)){
+    data = cloudData;
+  } else {
+    // First run — push demo data to Firestore
+    await window.saveToCloud(data);
+  }
+  bootApp();
+  startRealtimeSync();
+});
+
+// Fallback timeout
+setTimeout(function(){
+  if(!window.firebaseReady){ bootApp(); renderAll(); }
+}, 4000);
+
+// Try immediate boot if session exists
+bootApp();
 </script>
 </body>
 </html>
