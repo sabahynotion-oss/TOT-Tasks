@@ -5,6 +5,54 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>المكتب الفني — إدارة المشاريع</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script type="module">
+// ===== FIREBASE SETUP =====
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBftlh_vIvtSoUffIJhyqbvuRJ57Hy1yis",
+  authDomain: "tot-tasks.firebaseapp.com",
+  projectId: "tot-tasks",
+  storageBucket: "tot-tasks.firebasestorage.app",
+  messagingSenderId: "1094889002587",
+  appId: "1:1094889002587:web:4bc59dc46fbbc02a5dd17e"
+};
+
+const fireApp = initializeApp(firebaseConfig);
+const db = getFirestore(fireApp);
+const DATA_DOC = doc(db, 'app', 'mainData');
+
+// Save to Firestore
+window.saveToCloud = async function(dataObj) {
+  try {
+    await setDoc(DATA_DOC, { projects: dataObj.projects, tasks: dataObj.tasks });
+  } catch(e) { console.error('Save error:', e); }
+};
+
+// Listen for real-time changes
+window.listenCloud = function(callback) {
+  return onSnapshot(DATA_DOC, (snap) => {
+    if(snap.exists()) {
+      const d = snap.data();
+      callback({ projects: d.projects||[], tasks: d.tasks||[] });
+    }
+  });
+};
+
+// Load once
+window.loadCloud = async function() {
+  try {
+    const snap = await getDoc(DATA_DOC);
+    if(snap.exists()) return snap.data();
+    return null;
+  } catch(e) { return null; }
+};
+
+// Signal app that Firebase is ready
+window.firebaseReady = true;
+document.dispatchEvent(new Event('firebaseReady'));
+</script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
 :root{
@@ -210,6 +258,9 @@ header{background:rgba(13,22,38,.96);border-bottom:1px solid var(--border);paddi
     </div>
     <div class="breadcrumb" id="breadcrumb"></div>
     <span class="role-badge" id="roleBadge"></span>
+    <span id="syncIndicator" style="font-size:10px;padding:3px 10px;border-radius:10px;background:rgba(0,230,118,.1);color:var(--green);border:1px solid rgba(0,230,118,.2);display:none">
+      🟢 متزامن
+    </span>
     <div class="ml" style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-green" onclick="exportExcel()">📊 Excel</button>
       <button class="btn btn-orange" onclick="exportPrint()">🖨 PDF</button>
@@ -346,7 +397,12 @@ let currentView='projects',currentProjectId=null;
 let filter='all',search='',taskFilter='all',taskSearch='',allTaskFilter='all';
 let editProjId=null,editTaskId=null,phCount=0,selColor=COLORS[0];
 
-function save(){localStorage.setItem('fiberData_v6',JSON.stringify(data));}
+function save(){
+  // Save to localStorage as backup
+  localStorage.setItem('fiberData_v6', JSON.stringify(data));
+  // Save to Firestore for real-time sync
+  if(window.saveToCloud) window.saveToCloud(data);
+}
 function ini(n){if(!n)return'?';const p=n.trim().split(' ');return p.length>1?p[0][0]+p[1][0]:p[0].slice(0,2);}
 function projLetter(name){
   if(!name)return'P';
