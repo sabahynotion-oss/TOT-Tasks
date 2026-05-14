@@ -614,6 +614,63 @@ function goHome(){
   renderBreadcrumb();renderProjects();
 }
 
+function renderPhases(phases, tid){
+  const isAd=canAdd(), isDel=canDelete();
+  const SLoc={done:'مكتملة',active:'جارية',pending:'معلقة',blocked:'موقوفة',planned:'مخططة'};
+  if(!phases.length) return '<div style="padding:14px;text-align:center;color:var(--text3);font-size:12px">لا توجد مراحل</div>';
+  
+  const rows = phases.map(function(ph, pi){
+    // Delay calculation
+    let delayHtml='<span style="color:var(--text3)">لم يُسجل بعد</span>';
+    if(ph.end && ph.actualEnd){
+      const diffMs = new Date(ph.actualEnd)-new Date(ph.end);
+      const absD = Math.abs(Math.round(diffMs/(1000*60*60*24)));
+      const absH = Math.round(Math.abs(diffMs)/(1000*60*60))%24;
+      const label = absD>0?(absD+' يوم'+(absH>0?' '+absH+' س':'')):(Math.round(Math.abs(diffMs)/(1000*60*60))+' ساعة');
+      if(diffMs===0) delayHtml='<span style="color:var(--green);font-weight:700">✅ في الموعد</span>';
+      else if(diffMs>0) delayHtml='<span style="color:var(--red);font-weight:700">⏰ تأخير '+label+'</span>';
+      else delayHtml='<span style="color:var(--accent);font-weight:700">⚡ مبكر '+label+'</span>';
+    }
+
+    // Status selector options
+    const opts = ['planned','active','pending','done','blocked'].map(function(s){
+      return '<option value="'+s+'"'+(ph.status===s?' selected':'')+'>'+SLoc[s]+'</option>';
+    }).join('');
+
+    const selOnchange = 'updatePhase("'+tid+'",'+pi+',this.value)';
+    const statusSel = isAd ? '<select class="ph-sel" onchange="'+selOnchange+'">'+opts+'</select>' : '';
+
+    const delOnclick = 'promptDelete("phase","'+tid+'",'+pi+')';
+    const delBtn = isDel ? '<button onclick="'+delOnclick+'" style="background:transparent;border:none;cursor:pointer;color:var(--red);font-size:13px;padding:2px 5px;border-radius:5px" title="حذف المرحلة">🗑</button>' : '';
+
+    const phCode = ph.code ? '<span style="font-size:9px;font-weight:800;color:var(--text3);background:var(--s3);padding:1px 7px;border-radius:5px">'+ph.code+'</span>' : '';
+
+    return [
+      '<div class="ph-row">',
+        '<div class="ph-dot pd-'+ph.status+'">'+(pi+1)+'</div>',
+        '<div class="ph-content">',
+          '<div class="ph-hd">',
+            phCode,
+            '<span class="ph-name">'+ph.name+'</span>',
+            '<span class="badge s-'+ph.status+'">'+SLoc[ph.status]+'</span>',
+            statusSel, delBtn,
+          '</div>',
+          '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;background:var(--s2);border-radius:8px;padding:10px">',
+            '<div class="ph-item"><label>📅 بداية مخططة</label><span>'+(ph.start?ph.start.replace('T',' ').slice(0,16):'—')+'</span></div>',
+            '<div class="ph-item"><label>🏁 نهاية مخططة</label><span>'+(ph.end?ph.end.replace('T',' ').slice(0,16):'—')+'</span></div>',
+            '<div class="ph-item"><label>✅ بداية فعلية</label><span style="color:'+(ph.actualStart?'var(--green)':'var(--text3)')+'">'+( ph.actualStart?ph.actualStart.replace('T',' ').slice(0,16):'—')+'</span></div>',
+            '<div class="ph-item"><label>✅ نهاية فعلية</label><span style="color:'+(ph.actualEnd?'var(--green)':'var(--text3)')+'">'+( ph.actualEnd?ph.actualEnd.replace('T',' ').slice(0,16):'—')+'</span></div>',
+            '<div class="ph-item"><label>👤 المسؤول</label><span>'+(ph.responsible||'—')+'</span></div>',
+            '<div class="ph-item"><label>⏱ التأخير</label><span>'+delayHtml+'</span></div>',
+          '</div>',
+        '</div>',
+      '</div>'
+    ].join('');
+  });
+
+  return '<p class="ph-title">مراحل التنفيذ</p><div class="ph-timeline">'+rows.join('')+'</div>';
+}
+
 function renderTaskBoard(el,tasks,showProj){
   if(!tasks.length){el.innerHTML='<div class="empty"><div>📋</div><p>لا توجد مهام</p></div>';return;}
   el.innerHTML='';
