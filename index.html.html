@@ -5,53 +5,61 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>المكتب الفني — إدارة المشاريع</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script type="module">
-// ===== FIREBASE SETUP =====
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+<script>
+// ===== FIREBASE SETUP — load scripts dynamically to guarantee order =====
+function loadScript(src, cb){
+  var s=document.createElement('script');
+  s.src=src;
+  s.onload=cb;
+  s.onerror=function(){ console.error('Failed to load', src); };
+  document.head.appendChild(s);
+}
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBftlh_vIvtSoUffIJhyqbvuRJ57Hy1yis",
-  authDomain: "tot-tasks.firebaseapp.com",
-  projectId: "tot-tasks",
-  storageBucket: "tot-tasks.firebasestorage.app",
-  messagingSenderId: "1094889002587",
-  appId: "1:1094889002587:web:4bc59dc46fbbc02a5dd17e"
-};
+loadScript('https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js', function(){
+  loadScript('https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js', function(){
+    // Both scripts loaded — now safe to use firebase
+    var firebaseConfig = {
+      apiKey: "AIzaSyBftlh_vIvtSoUffIJhyqbvuRJ57Hy1yis",
+      authDomain: "tot-tasks.firebaseapp.com",
+      projectId: "tot-tasks",
+      storageBucket: "tot-tasks.firebasestorage.app",
+      messagingSenderId: "1094889002587",
+      appId: "1:1094889002587:web:4bc59dc46fbbc02a5dd17e"
+    };
 
-const fireApp = initializeApp(firebaseConfig);
-const db = getFirestore(fireApp);
-const DATA_DOC = doc(db, 'app', 'mainData');
+    firebase.initializeApp(firebaseConfig);
+    var db = firebase.firestore();
+    var DATA_DOC = db.collection('app').doc('mainData');
 
-// Save to Firestore
-window.saveToCloud = async function(dataObj) {
-  try {
-    await setDoc(DATA_DOC, { projects: dataObj.projects, tasks: dataObj.tasks });
-  } catch(e) { console.error('Save error:', e); }
-};
+    window.saveToCloud = async function(dataObj) {
+      try {
+        await DATA_DOC.set({ projects: dataObj.projects, tasks: dataObj.tasks });
+        console.log('Saved to Firestore ✅');
+      } catch(e) { console.error('Save error:', e); }
+    };
 
-// Listen for real-time changes
-window.listenCloud = function(callback) {
-  return onSnapshot(DATA_DOC, (snap) => {
-    if(snap.exists()) {
-      const d = snap.data();
-      callback({ projects: d.projects||[], tasks: d.tasks||[] });
-    }
+    window.listenCloud = function(callback) {
+      return DATA_DOC.onSnapshot(function(snap) {
+        if(snap.exists) {
+          var d = snap.data();
+          callback({ projects: d.projects||[], tasks: d.tasks||[] });
+        }
+      });
+    };
+
+    window.loadCloud = async function() {
+      try {
+        var snap = await DATA_DOC.get();
+        if(snap.exists) return snap.data();
+        return null;
+      } catch(e) { console.error('Load error:', e); return null; }
+    };
+
+    window.firebaseReady = true;
+    document.dispatchEvent(new Event('firebaseReady'));
+    console.log('Firebase ready ✅');
   });
-};
-
-// Load once
-window.loadCloud = async function() {
-  try {
-    const snap = await getDoc(DATA_DOC);
-    if(snap.exists()) return snap.data();
-    return null;
-  } catch(e) { return null; }
-};
-
-// Signal app that Firebase is ready
-window.firebaseReady = true;
-document.dispatchEvent(new Event('firebaseReady'));
+});
 </script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
@@ -1166,32 +1174,13 @@ function startRealtimeSync(){
   window.listenCloud(function(cloudData){
     if(cloudData && (cloudData.projects?.length || cloudData.tasks?.length)){
       data = cloudData;
+      console.log('Firestore data loaded:', data.projects.length, 'projects,', data.tasks.length, 'tasks');
+      console.log('Project IDs:', data.projects.map(p=>p.id));
+      console.log('Task projectIds:', data.tasks.map(t=>t.projectId));
     }
     const si = document.getElementById('syncIndicator');
-    if(si) si.style.display = '';
+    if(si) si.style.display='';
     renderAll();
   });
 }
 
-document.addEventListener('firebaseReady', async function(){
-  const cloudData = await window.loadCloud();
-  if(cloudData && (cloudData.projects?.length || cloudData.tasks?.length)){
-    data = cloudData;
-  } else {
-    // First run — push demo data to Firestore
-    await window.saveToCloud(data);
-  }
-  bootApp();
-  startRealtimeSync();
-});
-
-// Fallback timeout
-setTimeout(function(){
-  if(!window.firebaseReady){ bootApp(); renderAll(); }
-}, 4000);
-
-// Try immediate boot if session exists
-bootApp();
-</script>
-</body>
-</html>
