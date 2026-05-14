@@ -96,6 +96,10 @@ header{background:rgba(13,22,38,.96);border-bottom:1px solid var(--border);paddi
 .role-badge{padding:3px 10px;border-radius:10px;font-size:10px;font-weight:700}
 .role-admin{background:rgba(255,171,0,.12);color:var(--orange);border:1px solid rgba(255,171,0,.25)}
 .role-viewer{background:rgba(167,139,250,.12);color:var(--purple);border:1px solid rgba(167,139,250,.25)}
+.role-tot{background:rgba(0,198,255,.12);color:var(--accent);border:1px solid rgba(0,198,255,.25)}
+.role-upper{background:rgba(0,87,231,.12);color:#6fa3ff;border:1px solid rgba(0,87,231,.25)}
+.role-sinai{background:rgba(0,230,118,.12);color:var(--green);border:1px solid rgba(0,230,118,.25)}
+.role-hayat{background:rgba(255,171,0,.12);color:var(--orange);border:1px solid rgba(255,171,0,.25)}
 .ml{margin-right:auto}
 .btn{padding:7px 14px;border-radius:8px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;transition:all .2s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .btn-primary{background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff}
@@ -236,8 +240,12 @@ header{background:rgba(13,22,38,.96);border-bottom:1px solid var(--border);paddi
     <div class="login-logo"><img src="data:image/png;base64,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" style="width:120px;height:auto;margin-bottom:4px;mix-blend-mode:screen"></div>
     <h2>المكتب الفني</h2>
     <p>نظام إدارة المشاريع والمهام</p>
-    <div class="login-tabs">
+    <div class="login-tabs" style="flex-wrap:wrap;gap:4px">
       <button class="login-tab active" onclick="setRole('admin',this)">👑 Admin</button>
+      <button class="login-tab" onclick="setRole('tot',this)">➕ TOT</button>
+      <button class="login-tab" onclick="setRole('upper',this)">🔵 Upper</button>
+      <button class="login-tab" onclick="setRole('sinai',this)">🟢 Sinai</button>
+      <button class="login-tab" onclick="setRole('hayat',this)">🟡 Hayat</button>
       <button class="login-tab" onclick="setRole('viewer',this)">👁 Viewer</button>
     </div>
     <div class="login-field">
@@ -383,7 +391,19 @@ header{background:rgba(13,22,38,.96);border-bottom:1px solid var(--border);paddi
 </div>
 
 <script>
-const ROLES={admin:'admin100100',viewer:'user123'};
+const ROLES={
+  admin:   'sabahy52',
+  tot:     'totowner',
+  upper:   'upper1001',
+  sinai:   'sinai2001',
+  hayat:   'hayat3001',
+  viewer:  'acc123'
+};
+const ROLE_PROJECTS = {
+  upper: 'p1',
+  sinai: 'p2',
+  hayat: 'p3'
+};
 const COLORS=['#0057e7','#00bfa5','#ff6b35','#a78bfa','#00e676','#ffab00','#ff4d4d','#00c6ff','#f06292'];
 const SL={done:'مكتملة',active:'جارية',pending:'معلقة',blocked:'موقوفة',planned:'مخططة'};
 const PL={active:'نشطة',done:'منتهية',planned:'مخططة'};
@@ -469,7 +489,8 @@ function setRole(r,btn){loginTarget=r;document.querySelectorAll('.login-tab').fo
 function doLogin(){
   const pass=document.getElementById('loginPass').value;
   if(ROLES[loginTarget]===pass){
-    currentRole=loginTarget;sessionStorage.setItem('fiberRole',currentRole);
+    currentRole=loginTarget;
+    sessionStorage.setItem('fiberRole',currentRole);
     document.getElementById('loginScreen').style.display='none';
     document.getElementById('app').style.display='block';
     initApp();renderAll();
@@ -482,9 +503,20 @@ function logout(){sessionStorage.removeItem('fiberRole');document.getElementById
 document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 function initApp(){
   const b=document.getElementById('roleBadge');
-  b.textContent=currentRole==='admin'?'👑 Admin':'👁 Viewer';
-  b.className='role-badge '+(currentRole==='admin'?'role-admin':'role-viewer');
-  document.getElementById('addBtn').style.display=currentRole==='admin'?'':'none';
+  const roleLabels={admin:'👑 Admin',tot:'➕ TOT',upper:'🔵 Upper',sinai:'🟢 Sinai',hayat:'🟡 Hayat',viewer:'👁 Viewer'};
+  const roleColors={admin:'role-admin',tot:'role-tot',upper:'role-upper',sinai:'role-sinai',hayat:'role-hayat',viewer:'role-viewer'};
+  b.textContent=roleLabels[currentRole]||currentRole;
+  b.className='role-badge '+(roleColors[currentRole]||'role-viewer');
+  // Show add button for admin and tot only
+  const canAdd=['admin','tot'].includes(currentRole);
+  document.getElementById('addBtn').style.display=canAdd?'':'none';
+}
+function isAdmin(){ return currentRole==='admin'; }
+function canAdd(){ return ['admin','tot'].includes(currentRole); }
+function canDelete(){ return currentRole==='admin'; }
+function getViewableProjects(){
+  if(['admin','tot','viewer'].includes(currentRole)) return data.projects.map(p=>p.id);
+  return [ROLE_PROJECTS[currentRole]].filter(Boolean);
 }
 
 // RENDER
@@ -512,15 +544,15 @@ function renderProjects(){
   document.getElementById('tasksView').style.display='none';
   document.getElementById('addBtnText').textContent='مشروع';
   renderBreadcrumb();
-  const isAdmin=currentRole==='admin';
-  let projs=data.projects.filter(p=>(filter==='all'||p.status===filter)&&(!search||p.name.includes(search)||(p.desc||'').includes(search)));
+  const viewable=getViewableProjects();
+  let projs=data.projects.filter(p=>viewable.includes(p.id)&&(filter==='all'||p.status===filter)&&(!search||p.name.includes(search)||(p.desc||'').includes(search)));
   const grid=document.getElementById('projectsGrid');
   grid.innerHTML=projs.length?projs.map(p=>{
     const ts=projTasks(p.id),pp=projPct(p.id);
     return `<div class="proj-card" style="--pc:${p.color||'#0057e7'}" onclick="openProject('${p.id}')">
       <div class="proj-card-head">
         <div class="proj-icon" style="background:${p.color||'#0057e7'}22;color:${p.color||'#0057e7'};font-size:20px;font-weight:900;font-family:'Cairo',sans-serif">${projLetter(p.name)}</div>
-        ${isAdmin?`<div class="proj-actions" onclick="event.stopPropagation()">
+        ${isAdmin()?`<div class="proj-actions" onclick="event.stopPropagation()">
           <button class="icon-btn" onclick="openEditProject('${p.id}')">✏️</button>
           <button class="icon-btn" onclick="delProject('${p.id}')">🗑</button>
         </div>`:''}
@@ -536,9 +568,9 @@ function renderProjects(){
     </div>`;
   }).join(''):'<div class="empty"><div>📁</div><p>لا توجد مشاريع — أضف مشروعك الأول</p></div>';
   // Filter tasks
-  let allT = data.tasks;
+  let allT = data.tasks.filter(t=>viewable.includes(t.projectId));
   if(filter !== 'all') {
-    const filteredProjIds = data.projects.filter(p=>p.status===filter).map(p=>p.id);
+    const filteredProjIds = data.projects.filter(p=>p.status===filter&&viewable.includes(p.id)).map(p=>p.id);
     allT = allT.filter(t=>filteredProjIds.includes(t.projectId));
   }
   if(allTaskFilter !== 'all') allT = allT.filter(t=>t.status===allTaskFilter);
@@ -547,6 +579,9 @@ function renderProjects(){
 }
 
 function openProject(pid){
+  // Check permission
+  const viewable=getViewableProjects();
+  if(!viewable.includes(pid)){toast('⚠️ ليس لديك صلاحية عرض هذا المشروع');return;}
   currentView='tasks';currentProjectId=pid;
   document.getElementById('projectsView').style.display='none';
   document.getElementById('tasksView').style.display='block';
@@ -580,7 +615,6 @@ function goHome(){
 }
 
 function renderTaskBoard(el,tasks,showProj){
-  const isAdmin=currentRole==='admin';
   if(!tasks.length){el.innerHTML='<div class="empty"><div>📋</div><p>لا توجد مهام</p></div>';return;}
   el.innerHTML=tasks.map(task=>{
     const p=pct(task.phases),col=avc(task.owner);
@@ -601,13 +635,28 @@ function renderTaskBoard(el,tasks,showProj){
             ${taskDelayInfo(task).badge}
           </div>
         </div>
-        <div class="p-wrap"><div class="pbar"><div class="pfill" style="width:${p}%"></div></div><span class="ppct">${p}%</span></div>
+        <div class="p-wrap" style="flex-direction:column;align-items:flex-start;gap:3px;min-width:160px">
+          <div style="display:flex;align-items:center;gap:6px;width:100%">
+            <div class="pbar" style="flex:1"><div class="pfill" style="width:${p}%"></div></div>
+            <span class="ppct">${p}%</span>
+          </div>
+          ${(()=>{
+            const phs=task.phases||[];
+            const starts=phs.map(ph=>ph.start).filter(Boolean).sort();
+            const ends=phs.map(ph=>ph.end).filter(Boolean).sort();
+            if(!starts.length||!ends.length)return'';
+            const s=starts[0].replace('T',' ').slice(0,10);
+            const e=ends[ends.length-1].replace('T',' ').slice(0,10);
+            return `<span style="font-size:9px;color:var(--text3);white-space:nowrap">📅 ${s} ← ${e}</span>`;
+          })()}
+        </div>
         <div class="owner-chip">
           <div class="av" style="background:${col}18;color:${col};border-color:${col}30">${ini(task.owner)}</div>
           <span style="font-size:10px;color:var(--text2);max-width:65px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${task.owner||'—'}</span>
         </div>
         <div class="task-acts" onclick="event.stopPropagation()">
-          ${isAdmin?`<button class="icon-btn" onclick="openEditTask('${task.id}')" title="تعديل">✏️</button><button class="icon-btn" style="color:var(--red)" onclick="promptDelete('task','${task.id}')" title="حذف">🗑</button>`:''}
+          ${canAdd()?`<button class="icon-btn" onclick="openEditTask('${task.id}')" title="تعديل">✏️</button>`:''}
+          ${canDelete()?`<button class="icon-btn" style="color:var(--red)" onclick="promptDelete('task','${task.id}')" title="حذف">🗑</button>`:''}
         </div>
         <span class="chevron">▾</span>
       </div>
@@ -617,7 +666,6 @@ function renderTaskBoard(el,tasks,showProj){
 }
 
 function renderPhases(phases,tid){
-  const isAdmin=currentRole==='admin';
   if(!phases.length)return'<div style="padding:14px;text-align:center;color:var(--text3);font-size:12px">لا توجد مراحل</div>';
   return`<p class="ph-title">مراحل التنفيذ</p><div class="ph-timeline">${phases.map((ph,pi)=>`
     <div class="ph-row">
@@ -627,8 +675,8 @@ function renderPhases(phases,tid){
           ${ph.code?`<span style="font-size:9px;font-weight:800;color:var(--text3);background:var(--s3);padding:1px 7px;border-radius:5px;letter-spacing:.3px">${ph.code}</span>`:''}
           <span class="ph-name">${ph.name}</span>
           <span class="badge s-${ph.status}">${SL[ph.status]}</span>
-          ${isAdmin?`<button onclick="promptDelete('phase','${tid}',${pi})" style="background:transparent;border:none;cursor:pointer;color:var(--red);font-size:13px;padding:2px 5px;border-radius:5px" title="حذف المرحلة">🗑</button>`:''}
-          ${isAdmin?`<select class="ph-sel" onchange="updatePhase('${tid}',${pi},this.value)">
+          ${canDelete()?`<button onclick="promptDelete('phase','${tid}',${pi})" style="background:transparent;border:none;cursor:pointer;color:var(--red);font-size:13px;padding:2px 5px;border-radius:5px" title="حذف المرحلة">🗑</button>`:''}
+          ${canAdd()?`<select class="ph-sel" onchange="updatePhase('${tid}',${pi},this.value)">
             <option value="planned" ${ph.status==='planned'?'selected':''}>مخططة</option>
             <option value="active" ${ph.status==='active'?'selected':''}>جارية</option>
             <option value="pending" ${ph.status==='pending'?'selected':''}>معلقة</option>
@@ -659,7 +707,14 @@ function renderPhases(phases,tid){
     </div>`).join('')}</div>`;
 }
 
-function toggleCard(id){document.getElementById(`tc-${id}`)?.classList.toggle('expanded');}
+function toggleCard(id){
+  const card=document.getElementById(`tc-${id}`);
+  if(card) card.classList.toggle('expanded');
+}
+function expandCard(id){
+  const card=document.getElementById(`tc-${id}`);
+  if(card) card.classList.add('expanded');
+}
 function updatePhase(tid,pi,val){
   const task=data.tasks.find(t=>t.id===tid);if(!task)return;
   task.phases[pi].status=val;
@@ -1050,6 +1105,14 @@ function bootApp(){
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     initApp();
+    // Auto-open project for single-project roles
+    if(ROLE_PROJECTS[currentRole]){
+      currentView='tasks';
+      currentProjectId=ROLE_PROJECTS[currentRole];
+      document.getElementById('projectsView').style.display='none';
+      document.getElementById('tasksView').style.display='block';
+      document.getElementById('addBtnText').textContent='مهمة';
+    }
     document.getElementById('allTasksBoard').innerHTML = '<div class="empty"><div>🔄</div><p>جاري التحميل...</p></div>';
   }
 }
