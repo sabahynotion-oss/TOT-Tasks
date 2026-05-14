@@ -6,60 +6,101 @@
 <title>المكتب الفني — إدارة المشاريع</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-// ===== FIREBASE SETUP — load scripts dynamically to guarantee order =====
-function loadScript(src, cb){
-  var s=document.createElement('script');
-  s.src=src;
-  s.onload=cb;
-  s.onerror=function(){ console.error('Failed to load', src); };
-  document.head.appendChild(s);
-}
+// ===== FIREBASE REST API — no SDK needed =====
+(function(){
+  var PROJECT_ID = 'tot-tasks';
+  var API_KEY    = 'AIzaSyBftlh_vIvtSoUffIJhyqbvuRJ57Hy1yis';
+  var BASE_URL   = 'https://firestore.googleapis.com/v1/projects/' + PROJECT_ID + '/databases/(default)/documents/app/mainData';
+  var BASE_QUERY = BASE_URL + '?key=' + API_KEY;
 
-loadScript('https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js', function(){
-  loadScript('https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js', function(){
-    // Both scripts loaded — now safe to use firebase
-    var firebaseConfig = {
-      apiKey: "AIzaSyBftlh_vIvtSoUffIJhyqbvuRJ57Hy1yis",
-      authDomain: "tot-tasks.firebaseapp.com",
-      projectId: "tot-tasks",
-      storageBucket: "tot-tasks.firebasestorage.app",
-      messagingSenderId: "1094889002587",
-      appId: "1:1094889002587:web:4bc59dc46fbbc02a5dd17e"
-    };
+  // Convert JS object to Firestore REST format
+  function toFS(val){
+    if(val===null||val===undefined) return {nullValue:null};
+    if(typeof val==='boolean') return {booleanValue:val};
+    if(typeof val==='number') return Number.isInteger(val)?{integerValue:String(val)}:{doubleValue:val};
+    if(typeof val==='string') return {stringValue:val};
+    if(Array.isArray(val)) return {arrayValue:{values:val.map(toFS)}};
+    if(typeof val==='object'){
+      var fields={};
+      Object.keys(val).forEach(function(k){ fields[k]=toFS(val[k]); });
+      return {mapValue:{fields:fields}};
+    }
+    return {stringValue:String(val)};
+  }
 
-    firebase.initializeApp(firebaseConfig);
-    var db = firebase.firestore();
-    var DATA_DOC = db.collection('app').doc('mainData');
+  // Convert Firestore REST format to JS object
+  function fromFS(v){
+    if(!v) return null;
+    if('nullValue' in v) return null;
+    if('booleanValue' in v) return v.booleanValue;
+    if('integerValue' in v) return parseInt(v.integerValue);
+    if('doubleValue' in v) return v.doubleValue;
+    if('stringValue' in v) return v.stringValue;
+    if('arrayValue' in v) return (v.arrayValue.values||[]).map(fromFS);
+    if('mapValue' in v){
+      var obj={};
+      Object.keys(v.mapValue.fields||{}).forEach(function(k){ obj[k]=fromFS(v.mapValue.fields[k]); });
+      return obj;
+    }
+    return null;
+  }
 
-    window.saveToCloud = async function(dataObj) {
-      try {
-        await DATA_DOC.set({ projects: dataObj.projects, tasks: dataObj.tasks });
-        console.log('Saved to Firestore ✅');
-      } catch(e) { console.error('Save error:', e); }
-    };
-
-    window.listenCloud = function(callback) {
-      return DATA_DOC.onSnapshot(function(snap) {
-        if(snap.exists) {
-          var d = snap.data();
-          callback({ projects: d.projects||[], tasks: d.tasks||[] });
-        }
+  // Save
+  window.saveToCloud = async function(dataObj){
+    try{
+      var fields={};
+      fields.projects = toFS(dataObj.projects);
+      fields.tasks    = toFS(dataObj.tasks);
+      await fetch(BASE_QUERY, {
+        method:'PATCH',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({fields:fields})
       });
-    };
+      console.log('Saved ✅');
+    }catch(e){ console.error('Save error:',e); }
+  };
 
-    window.loadCloud = async function() {
-      try {
-        var snap = await DATA_DOC.get();
-        if(snap.exists) return snap.data();
-        return null;
-      } catch(e) { console.error('Load error:', e); return null; }
-    };
+  // Load once
+  window.loadCloud = async function(){
+    try{
+      var r = await fetch(BASE_QUERY);
+      if(!r.ok) return null;
+      var doc = await r.json();
+      if(!doc.fields) return null;
+      return {
+        projects: fromFS(doc.fields.projects)||[],
+        tasks:    fromFS(doc.fields.tasks)||[]
+      };
+    }catch(e){ console.error('Load error:',e); return null; }
+  };
 
-    window.firebaseReady = true;
-    document.dispatchEvent(new Event('firebaseReady'));
-    console.log('Firebase ready ✅');
-  });
-});
+  // Real-time polling every 5 seconds (REST doesn't support WebSocket)
+  var lastHash = '';
+  window.listenCloud = function(callback){
+    async function poll(){
+      try{
+        var r = await fetch(BASE_QUERY);
+        if(!r.ok) return;
+        var doc = await r.json();
+        if(!doc.fields) return;
+        var hash = doc.updateTime||JSON.stringify(doc.fields).length;
+        if(String(hash)!==lastHash){
+          lastHash=String(hash);
+          callback({
+            projects: fromFS(doc.fields.projects)||[],
+            tasks:    fromFS(doc.fields.tasks)||[]
+          });
+        }
+      }catch(e){}
+    }
+    poll(); // immediate first load
+    return setInterval(poll, 5000); // poll every 5s
+  };
+
+  window.firebaseReady = true;
+  document.dispatchEvent(new Event('firebaseReady'));
+  console.log('Firebase REST ready ✅');
+})();
 </script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
@@ -1183,4 +1224,6 @@ function startRealtimeSync(){
     renderAll();
   });
 }
-
+</script>
+</body>
+</html>
