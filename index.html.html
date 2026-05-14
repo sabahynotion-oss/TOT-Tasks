@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>المكتب الفني — إدارة المشاريع</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -112,7 +112,7 @@
   --text:#dde8f5;--text2:#7a94b4;--text3:#3a5070;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-tap-highlight-color:transparent;padding-bottom:env(safe-area-inset-bottom)}
 body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(0,86,231,0.07),transparent);pointer-events:none;z-index:0}
 body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,198,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,198,255,0.02) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0}
 #loginScreen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center}
@@ -125,7 +125,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .login-tab.active{background:var(--accent2);color:#fff}
 .login-field{margin-bottom:16px;text-align:right}
 .login-field label{font-size:11px;color:var(--text2);display:block;margin-bottom:5px;font-weight:600}
-.login-field input{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:'Cairo',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
+.login-field input{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:'Cairo',sans-serif;font-size:16px;outline:none;transition:border-color .2s}
 .login-field input:focus{border-color:var(--accent2)}
 .btn-login{width:100%;padding:13px;background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;border-radius:10px;color:#fff;font-family:'Cairo',sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:all .2s}
 .btn-login:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(0,87,231,.4)}
@@ -183,7 +183,7 @@ header{background:rgba(13,22,38,.96);border-bottom:1px solid var(--border);paddi
 .proj-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;background:rgba(255,255,255,.05)}
 .proj-actions{display:flex;gap:4px;opacity:0;transition:opacity .2s}
 .proj-card:hover .proj-actions{opacity:1}
-.icon-btn{background:transparent;border:none;cursor:pointer;padding:5px 6px;border-radius:6px;font-size:13px;color:var(--text2);transition:all .2s}
+.icon-btn{background:transparent;border:none;cursor:pointer;padding:8px;border-radius:6px;font-size:13px;color:var(--text2);transition:all .2s;min-width:36px;min-height:36px;display:inline-flex;align-items:center;justify-content:center}
 .icon-btn:hover{background:var(--s2);color:var(--text)}
 .proj-name{font-size:14px;font-weight:800;margin-bottom:4px}
 .proj-desc{font-size:11px;color:var(--text2);margin-bottom:12px;line-height:1.6;min-height:18px}
@@ -257,7 +257,7 @@ header{background:rgba(13,22,38,.96);border-bottom:1px solid var(--border);paddi
 .modal-title{font-size:16px;font-weight:900;margin-bottom:20px;color:var(--accent)}
 .fg{display:flex;flex-direction:column;gap:5px}
 .fg label{font-size:11px;color:var(--text2);font-weight:700}
-.fg input,.fg select{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'Cairo',sans-serif;font-size:12px;outline:none;transition:border-color .2s;width:100%}
+.fg input,.fg select{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'Cairo',sans-serif;font-size:16px;outline:none;transition:border-color .2s;width:100%}
 .fg input:focus,.fg select:focus{border-color:var(--accent2)}
 .fg select option{background:var(--s1)}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -279,7 +279,85 @@ header{background:rgba(13,22,38,.96);border-bottom:1px solid var(--border);paddi
 .all-tasks-section{margin-top:8px}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--s1);border:1px solid var(--border2);border-radius:10px;padding:11px 22px;font-size:13px;font-weight:600;opacity:0;transition:all .3s;z-index:9999;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-@media(max-width:768px){.stats{grid-template-columns:repeat(2,1fr)}.projects-grid{grid-template-columns:1fr}.p-wrap,.phc-stats{display:none}.ph-grid{grid-template-columns:1fr 1fr}.ph-inp-grid{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}}
+@media(max-width:768px){
+  /* Stats */
+  .stats{grid-template-columns:repeat(2,1fr);gap:8px}
+  .sc{padding:10px 12px}
+  .sc-val{font-size:20px}
+  
+  /* Header */
+  .hinner{gap:8px;padding:0 12px}
+  .logo h1{font-size:13px}
+  .logo span{display:none}
+  .hinner > .ml{gap:6px}
+  .hinner .btn span{display:none}
+  .hinner .btn{padding:6px 8px;font-size:11px}
+  
+  /* Breadcrumb */
+  .breadcrumb{font-size:11px;max-width:140px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  
+  /* Login */
+  .login-box{width:95%;padding:24px 16px}
+  .login-tabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px}
+  .login-tab{font-size:11px;padding:7px 4px}
+  
+  /* Projects grid */
+  .projects-grid{grid-template-columns:1fr}
+  
+  /* Progress bar - hide on small */
+  .p-wrap{display:none}
+  .phc-stats{display:none}
+  
+  /* Task card */
+  .task-head{padding:10px 12px;gap:8px}
+  .task-name{font-size:13px}
+  .owner-chip span{display:none}
+  .av{width:24px;height:24px}
+  
+  /* Phase grid */
+  .ph-grid{grid-template-columns:1fr 1fr}
+  .ph-inp-grid{grid-template-columns:1fr 1fr}
+  
+  /* Modal */
+  .modal{width:97%;padding:16px;border-radius:14px;max-height:95vh}
+  .form-grid{grid-template-columns:1fr}
+  .span2{grid-column:1/-1}
+  
+  /* Toolbar - horizontal scroll */
+  .toolbar{flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .toolbar::-webkit-scrollbar{display:none}
+  .filter-btn{flex-shrink:0;font-size:11px;padding:5px 10px}
+  .search{min-width:140px;flex-shrink:0}
+  .search input{width:110px}
+  
+  /* Phases */
+  .phases-wrap{padding:0 10px 12px}
+  .ph-row{gap:8px}
+  .ph-dot{width:20px;height:20px;font-size:9px}
+  .ph-name{font-size:12px}
+  
+  /* Container */
+  .container{padding:14px 12px 60px}
+  
+  /* Project header card */
+  .proj-header-card{padding:14px;gap:10px}
+  .phc-name{font-size:15px}
+  
+  /* Section title */
+  .section-title{font-size:11px}
+  
+  /* Back button */
+  .back-btn{font-size:11px;padding:6px 10px;margin-bottom:14px}
+  
+  /* Delete modal */
+  #deleteModal .modal{width:94%;padding:20px}
+}
+
+@media(max-width:380px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .login-tabs{grid-template-columns:1fr 1fr}
+  .hinner .btn:not(.btn-primary){display:none}
+}
 </style>
 </head>
 <body>
