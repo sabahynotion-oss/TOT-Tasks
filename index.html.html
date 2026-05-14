@@ -1256,12 +1256,22 @@ async function initFromCloud(){
   if(!window.loadCloud) return;
   try {
     var cloudData = await window.loadCloud();
-    if(cloudData && cloudData.projects !== undefined){
-      // Use cloud data — even if empty arrays (user deleted everything)
+    if(cloudData && cloudData.projects && cloudData.projects.length > 0){
+      // Cloud has data — use it
       data = cloudData;
+    } else {
+      // DB empty or new — init with 3 fixed projects, no tasks
+      data = {
+        projects:[
+          {id:'p1',name:'WE-FTTH-Upper',desc:'مشروع تمديد شبكة الفايبر — الصعيد',status:'active',icon:'🏗️',color:'#0057e7',createdAt:new Date().toISOString()},
+          {id:'p2',name:'WE-FTTH-Sinai',desc:'مشروع تمديد شبكة الفايبر — سيناء',status:'active',icon:'📡',color:'#00bfa5',createdAt:new Date().toISOString()},
+          {id:'p3',name:'WE-FTTH-Hayat Karima',desc:'مشروع تمديد شبكة الفايبر — حياة كريمة',status:'active',icon:'🌐',color:'#ffab00',createdAt:new Date().toISOString()}
+        ],
+        tasks:[]
+      };
+      await window.saveToCloud(data);
+      console.log('Initialized 3 fixed projects ✅');
     }
-    // If Firestore doc doesn't exist yet (brand new) — do NOT push demo data
-    // User will add their own tasks
   } catch(e){ console.error('Init load error:', e); }
   showApp();
   renderAll();
