@@ -6,100 +6,56 @@
 <title>المكتب الفني — إدارة المشاريع</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-// ===== FIREBASE REST API — no SDK needed =====
+// ===== FIREBASE REALTIME DATABASE REST =====
 (function(){
-  var PROJECT_ID = 'tot-tasks';
-  var API_KEY    = 'AIzaSyBftlh_vIvtSoUffIJhyqbvuRJ57Hy1yis';
-  var BASE_URL   = 'https://firestore.googleapis.com/v1/projects/' + PROJECT_ID + '/databases/(default)/documents/app/mainData';
-  var BASE_QUERY = BASE_URL + '?key=' + API_KEY;
+  var DB_URL = 'https://tot-tasks-default-rtdb.firebaseio.com/data.json';
+  var pollInterval = null;
+  var lastData = null;
 
-  // Convert JS object to Firestore REST format
-  function toFS(val){
-    if(val===null||val===undefined) return {nullValue:null};
-    if(typeof val==='boolean') return {booleanValue:val};
-    if(typeof val==='number') return Number.isInteger(val)?{integerValue:String(val)}:{doubleValue:val};
-    if(typeof val==='string') return {stringValue:val};
-    if(Array.isArray(val)) return {arrayValue:{values:val.map(toFS)}};
-    if(typeof val==='object'){
-      var fields={};
-      Object.keys(val).forEach(function(k){ fields[k]=toFS(val[k]); });
-      return {mapValue:{fields:fields}};
-    }
-    return {stringValue:String(val)};
-  }
-
-  // Convert Firestore REST format to JS object
-  function fromFS(v){
-    if(!v) return null;
-    if('nullValue' in v) return null;
-    if('booleanValue' in v) return v.booleanValue;
-    if('integerValue' in v) return parseInt(v.integerValue);
-    if('doubleValue' in v) return v.doubleValue;
-    if('stringValue' in v) return v.stringValue;
-    if('arrayValue' in v) return (v.arrayValue.values||[]).map(fromFS);
-    if('mapValue' in v){
-      var obj={};
-      Object.keys(v.mapValue.fields||{}).forEach(function(k){ obj[k]=fromFS(v.mapValue.fields[k]); });
-      return obj;
-    }
-    return null;
-  }
-
-  // Save
   window.saveToCloud = async function(dataObj){
     try{
-      var fields={};
-      fields.projects = toFS(dataObj.projects);
-      fields.tasks    = toFS(dataObj.tasks);
-      await fetch(BASE_QUERY, {
-        method:'PATCH',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({fields:fields})
+      var res = await fetch(DB_URL, {
+        method: 'PUT',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({projects: dataObj.projects, tasks: dataObj.tasks})
       });
+      if(!res.ok) throw new Error('HTTP '+res.status);
       console.log('Saved ✅');
-    }catch(e){ console.error('Save error:',e); }
+    } catch(e){ console.error('Save error:', e); }
   };
 
-  // Load once
   window.loadCloud = async function(){
     try{
-      var r = await fetch(BASE_QUERY);
-      if(!r.ok) return null;
-      var doc = await r.json();
-      if(!doc.fields) return null;
-      return {
-        projects: fromFS(doc.fields.projects)||[],
-        tasks:    fromFS(doc.fields.tasks)||[]
-      };
-    }catch(e){ console.error('Load error:',e); return null; }
+      var res = await fetch(DB_URL);
+      if(!res.ok) return null;
+      var d = await res.json();
+      if(!d) return null;
+      return {projects: d.projects||[], tasks: d.tasks||[]};
+    } catch(e){ console.error('Load error:', e); return null; }
   };
 
-  // Real-time polling every 5 seconds (REST doesn't support WebSocket)
-  var lastHash = '';
   window.listenCloud = function(callback){
     async function poll(){
       try{
-        var r = await fetch(BASE_QUERY);
-        if(!r.ok) return;
-        var doc = await r.json();
-        if(!doc.fields) return;
-        var hash = doc.updateTime||JSON.stringify(doc.fields).length;
-        if(String(hash)!==lastHash){
-          lastHash=String(hash);
-          callback({
-            projects: fromFS(doc.fields.projects)||[],
-            tasks:    fromFS(doc.fields.tasks)||[]
-          });
+        var res = await fetch(DB_URL);
+        if(!res.ok) return;
+        var d = await res.json();
+        if(!d) return;
+        var hash = JSON.stringify(d);
+        if(hash !== lastData){
+          lastData = hash;
+          callback({projects: d.projects||[], tasks: d.tasks||[]});
         }
-      }catch(e){}
+      } catch(e){}
     }
-    poll(); // immediate first load
-    return setInterval(poll, 5000); // poll every 5s
+    poll();
+    pollInterval = setInterval(poll, 5000);
+    return pollInterval;
   };
 
   window.firebaseReady = true;
   document.dispatchEvent(new Event('firebaseReady'));
-  console.log('Firebase REST ready ✅');
+  console.log('Realtime DB ready ✅');
 })();
 </script>
 <style>
@@ -539,7 +495,7 @@ const AVC=['#0057e7','#00c6ff','#00e676','#ffab00','#a78bfa','#ff4d4d','#00bcd4'
 let currentRole='viewer',loginTarget='admin';
 // v4 - reset from v3
 if(!localStorage.getItem('fiberData_v6')) localStorage.removeItem('fiberData_v3');
-let data=JSON.parse(localStorage.getItem('fiberData_v6')||'null')||getDemo();
+let data={projects:[],tasks:[]}; // loaded from Firestore on init
 let currentView='projects',currentProjectId=null;
 let filter='all',search='',taskFilter='all',taskSearch='',allTaskFilter='all';
 let editProjId=null,editTaskId=null,phCount=0,selColor=COLORS[0];
@@ -1266,42 +1222,66 @@ function migrateData(){
 }
 
 // ===== FIRESTORE-ONLY INIT =====
-// Clear localStorage completely to avoid conflicts
 try { localStorage.clear(); } catch(e){}
 
-function bootApp(){
+function showApp(){
   const saved = sessionStorage.getItem('fiberRole');
-  if(saved){
-    currentRole = saved;
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    initApp();
-    // Auto-open project for single-project roles
-    if(ROLE_PROJECTS[currentRole]){
-      currentView='tasks';
-      currentProjectId=ROLE_PROJECTS[currentRole];
-      document.getElementById('projectsView').style.display='none';
-      document.getElementById('tasksView').style.display='block';
-      document.getElementById('addBtnText').textContent='مهمة';
-    }
-    document.getElementById('allTasksBoard').innerHTML = '<div class="empty"><div>🔄</div><p>جاري التحميل...</p></div>';
+  if(!saved) return;
+  currentRole = saved;
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  initApp();
+  if(ROLE_PROJECTS[currentRole]){
+    currentView='tasks';
+    currentProjectId=ROLE_PROJECTS[currentRole];
+    document.getElementById('projectsView').style.display='none';
+    document.getElementById('tasksView').style.display='block';
+    document.getElementById('addBtnText').textContent='مهمة';
   }
 }
 
-function startRealtimeSync(){
+function startPolling(){
   if(!window.listenCloud) return;
   window.listenCloud(function(cloudData){
-    if(cloudData && (cloudData.projects?.length || cloudData.tasks?.length)){
+    if(cloudData && (cloudData.projects?.length >= 0)){
       data = cloudData;
-      console.log('Firestore data loaded:', data.projects.length, 'projects,', data.tasks.length, 'tasks');
-      console.log('Project IDs:', data.projects.map(p=>p.id));
-      console.log('Task projectIds:', data.tasks.map(t=>t.projectId));
     }
     const si = document.getElementById('syncIndicator');
     if(si) si.style.display='';
     renderAll();
   });
 }
+
+async function initFromCloud(){
+  if(!window.loadCloud) return;
+  try {
+    var cloudData = await window.loadCloud();
+    if(cloudData && cloudData.projects !== undefined){
+      // Use cloud data — even if empty arrays (user deleted everything)
+      data = cloudData;
+    }
+    // If Firestore doc doesn't exist yet (brand new) — do NOT push demo data
+    // User will add their own tasks
+  } catch(e){ console.error('Init load error:', e); }
+  showApp();
+  renderAll();
+  startPolling();
+}
+
+// Wait for Firebase REST to be ready
+function waitForFirebase(){
+  if(window.firebaseReady){
+    initFromCloud();
+  } else {
+    document.addEventListener('firebaseReady', function(){ initFromCloud(); });
+    // Fallback: if Firebase never loads after 5s, show app anyway
+    setTimeout(function(){
+      if(!window.firebaseReady){ showApp(); renderAll(); }
+    }, 5000);
+  }
+}
+
+waitForFirebase();
 </script>
 </body>
 </html>
